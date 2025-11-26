@@ -16,7 +16,7 @@ function SignUpPage() {
                 setError('Пожалуйста, заполните все поля.');
                 return;
             }
-            const response = await axios.post('http://localhost:8080/signup',
+            const response = await axios.post('http://localhost:8080/user/signup',
                 { username, email, password },
                 {
                     withCredentials: true,
@@ -29,7 +29,18 @@ function SignUpPage() {
             navigate('/login', { state: { message: 'Регистрация прошла успешно! Теперь вы можете войти.' } });
         } catch (error) {
             console.error('Sign up failed:', error.response ? error.response.data : error.message);
-            setError(error.response.data.error);
+            if (error.response) {
+                const errorData = error.response.data;
+                if (typeof errorData === 'string') {
+                    setError(errorData);
+                } else if (errorData.error) {
+                    setError(errorData.error);
+                } else {
+                    setError('Ошибка при регистрации');
+                }
+            } else {
+                setError('Ошибка сети');
+            }
         }
     };
 

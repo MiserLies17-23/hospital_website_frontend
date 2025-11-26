@@ -15,7 +15,7 @@ function PatientCabinet({ onLogout }) {
     useEffect(() => {
         const fetchUserInfo = async () => {
             try {
-                const response = await axios.get('http://localhost:8080/dashboard', {
+                const response = await axios.get('http://localhost:8080/user/dashboard', {
                     withCredentials: true,
                     headers: {
                         "Content-Type": "application/json"

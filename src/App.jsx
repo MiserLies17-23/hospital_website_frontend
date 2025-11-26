@@ -12,22 +12,33 @@ import VisitorCount from './VisitorCount';
 import AdminPanel from './AdminPanel';
 import UpdateUser from './UpdateUser';
 
+const api = axios.create({
+    baseURL: 'http://localhost:8080',
+    withCredentials: true
+});
+
 function App() {
     const [buttonsStatus, setButtonsStatus] = useState('');
     const [error, setError] = useState('');
 
     const getButtons = async () => {
         try {
-            const response = await axios.get("http://localhost:8080/checklogin", {
-                withCredentials: true,
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            });
-            setButtonsStatus(response.status);
+            const response = await api.get("/user/checklogin");
+
+            if (response.status === 200) {
+                setButtonsStatus('authenticated');
+            } else {
+                setButtonsStatus('not_authenticated');
+            }
         } catch (error) {
-            setError("Не удалось загрузить кнопки");
-            console.error(error);
+            // 401 ошибка - это нормально (не авторизован)
+            if (error.response?.status === 401) {
+                setButtonsStatus('not_authenticated');
+            } else {
+                setError("Не удалось загрузить кнопки");
+                setButtonsStatus('not_authenticated');
+                console.log("Ошибка проверки авторизации:", error.message);
+            }
         }
     };
 
@@ -37,13 +48,8 @@ function App() {
 
         const handleLogout = async () => {
             try {
-                await axios.get("http://localhost:8080/logout", {
-                    withCredentials: true,
-                    headers: {
-                        "Content-Type": "application/json"
-                    }
-                });
-                setButtonsStatus('');
+                await api.get("/user/logout");
+                setButtonsStatus('not_authenticated');
                 navigate('/');
             } catch (error) {
                 console.error("Ошибка при выходе:", error);

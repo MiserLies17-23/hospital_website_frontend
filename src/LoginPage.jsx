@@ -20,7 +20,7 @@ function LoginPage() {
                 setError('Пожалуйста, введите логин и пароль.');
                 return;
             }
-            const response = await axios.post('http://localhost:8080/login', { username, password },
+            const response = await axios.post('http://localhost:8080/user/login', { username, password },
                 {withCredentials: true,
                     headers:{
                         "Content-Type": "application/json"
