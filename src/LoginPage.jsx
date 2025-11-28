@@ -5,13 +5,12 @@ import { MDBContainer, MDBInput, MDBBtn } from 'mdb-react-ui-kit';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-function LoginPage() {
+function LoginPage({ onLoginSuccess }) {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const location = useLocation();
     const message = location.state?.message;
-
     const navigate = useNavigate();
 
     const handleLogin = async () => {
@@ -21,17 +20,24 @@ function LoginPage() {
                 return;
             }
             const response = await axios.post('http://localhost:8080/user/login', { username, password },
-                {withCredentials: true,
-                    headers:{
+                {
+                    withCredentials: true,
+                    headers: {
                         "Content-Type": "application/json"
                     }
                 }
             );
             console.log('Login successful:', response.data);
+
+            // Вызываем колбэк при успешном входе
+            if (onLoginSuccess) {
+                onLoginSuccess();
+            }
+
             navigate('/dashboard');
         } catch (error) {
             console.error('Login failed:', error.response ? error.response.data : error.message);
-            setError(error.response.data);
+            setError(error.response?.data || 'Ошибка при входе');
         }
     };
 

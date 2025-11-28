@@ -60,27 +60,45 @@ function AdminPanel() {
                             <td>{user.username}</td>
                             <td>{user.email}</td>
                             <td>{user.role}</td>
-                            <td><img src={user.avatar} alt="User Avatar" style={{ width: '100px', height: '100px', borderRadius: '60px' }} /></td>
-                            {user.id === 1 ? (
-                                <td className='d-flex flex-column'>
-                                    <Link
-                                        to={`/update/${user.id}`}
-                                        className="btn btn-primary"
-                                    >
-                                        Изменить
-                                    </Link>
-                                </td>
-                            ) : (
-                                <td className='d-flex flex-column gap-3'>
-                                    <Link
-                                        to={`/update/${user.id}`}
-                                        className="btn btn-primary"
-                                    >
-                                        Изменить
-                                    </Link>
-                                    <button className="btn btn-danger" onClick={() => deleteUser(user.id)}>Удалить</button>
-                                </td>
-                            )}
+                            <td>
+                                <img
+                                    src={user.avatar || '/defaultUserImage.png'}
+                                    alt="User Avatar"
+                                    style={{
+                                        width: '60px',
+                                        height: '60px',
+                                        borderRadius: '50%',
+                                        objectFit: 'cover'
+                                    }}
+                                />
+                            </td>
+                            <td>
+                                {user.id === 1 ? (
+                                    <div className='d-flex flex-column'>
+                                        <Link
+                                            to={`/update/${user.id}`}
+                                            className="btn btn-primary"
+                                        >
+                                            Изменить
+                                        </Link>
+                                    </div>
+                                ) : (
+                                    <div className='d-flex flex-column gap-2'>
+                                        <Link
+                                            to={`/update/${user.id}`}
+                                            className="btn btn-primary"
+                                        >
+                                            Изменить
+                                        </Link>
+                                        <button
+                                            className="btn btn-danger"
+                                            onClick={() => deleteUser(user.id)}
+                                        >
+                                            Удалить
+                                        </button>
+                                    </div>
+                                )}
+                            </td>
                         </tr>
                     ))}
                     </tbody>
