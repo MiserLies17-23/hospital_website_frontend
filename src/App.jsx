@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Route, Routes, Link, useLocation, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import axios from 'axios';
 import LoginPage from './LoginPage';
 import SignupPage from './SignUpPage';
@@ -18,29 +18,35 @@ const api = axios.create({
 });
 
 function App() {
-    const [buttonsStatus, setButtonsStatus] = useState('');
-    const [error, setError] = useState('');
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [userRole, setUserRole] = useState('');
+    const [loading, setLoading] = useState(true);
 
-    const getButtons = async () => {
+    // Проверка аутентификации при загрузке приложения
+    const checkAuth = async () => {
         try {
             const response = await api.get("/user/checklogin");
-
             if (response.status === 200) {
-                setButtonsStatus('authenticated');
-            } else {
-                setButtonsStatus('not_authenticated');
+                setIsAuthenticated(true);
+                // Получаем информацию о пользователе для роли
+                const userResponse = await api.get('/user/dashboard');
+                setUserRole(userResponse.data.role);
             }
         } catch (error) {
-            // 401 ошибка - это нормально (не авторизован)
             if (error.response?.status === 401) {
-                setButtonsStatus('not_authenticated');
+                setIsAuthenticated(false);
+                setUserRole('');
             } else {
-                setError("Не удалось загрузить кнопки");
-                setButtonsStatus('not_authenticated');
                 console.log("Ошибка проверки авторизации:", error.message);
             }
+        } finally {
+            setLoading(false);
         }
     };
+
+    useEffect(() => {
+        checkAuth();
+    }, []);
 
     function AppContent() {
         const location = useLocation();
@@ -49,16 +55,22 @@ function App() {
         const handleLogout = async () => {
             try {
                 await api.get("/user/logout");
-                setButtonsStatus('not_authenticated');
+                setIsAuthenticated(false);
+                setUserRole('');
                 navigate('/');
             } catch (error) {
                 console.error("Ошибка при выходе:", error);
             }
         };
 
+        // При изменении маршрута проверяем аутентификацию
         useEffect(() => {
-            getButtons();
+            checkAuth();
         }, [location]);
+
+        if (loading) {
+            return <div className="d-flex justify-content-center align-items-center vh-100">Загрузка...</div>;
+        }
 
         return (
             <>
@@ -66,6 +78,10 @@ function App() {
                     <div className="d-flex align-items-center">
                         <Link to="/" className="btn btn-secondary">Больница "Здоровье"</Link>
                         <Link to="/news" className="btn btn-secondary mx-2">Новости</Link>
+                        {/* Кнопка личного кабинета всегда видна если авторизован */}
+                        {isAuthenticated && (
+                            <Link to="/dashboard" className="btn btn-primary mx-2">Личный кабинет</Link>
+                        )}
                     </div>
 
                     <div className="center-block">
@@ -74,19 +90,50 @@ function App() {
                     </div>
 
                     <div>
-                        <AuthButtons buttonsStatus={buttonsStatus} />
+                        <AuthButtons
+                            isAuthenticated={isAuthenticated}
+                            userRole={userRole}
+                            onLogout={handleLogout}
+                        />
                     </div>
                 </div>
 
-                <div className="d-flex justify-content-center align-items-center vh-100">
+                <div className="main-content">
                     <Routes>
                         <Route path="/" element={<HospitalPage />} />
                         <Route path="/news" element={<NewsPage />} />
-                        <Route path="/login" element={<LoginPage />} />
+                        <Route path="/login" element={<LoginPage onLoginSuccess={checkAuth} />} />
                         <Route path="/signup" element={<SignupPage />} />
-                        <Route path="/dashboard" element={<PatientCabinet onLogout={handleLogout} />} />
-                        <Route path="/admin-panel" element={<AdminPanel />} />
-                        <Route path="/update/:id" element={<UpdateUser />} />
+                        <Route
+                            path="/dashboard"
+                            element={
+                                isAuthenticated ? (
+                                    <PatientCabinet onLogout={handleLogout} />
+                                ) : (
+                                    <Navigate to="/login" replace />
+                                )
+                            }
+                        />
+                        <Route
+                            path="/admin-panel"
+                            element={
+                                isAuthenticated && userRole === 'ADMIN' ? (
+                                    <AdminPanel />
+                                ) : (
+                                    <Navigate to="/dashboard" replace />
+                                )
+                            }
+                        />
+                        <Route
+                            path="/update/:id"
+                            element={
+                                isAuthenticated && userRole === 'ADMIN' ? (
+                                    <UpdateUser />
+                                ) : (
+                                    <Navigate to="/dashboard" replace />
+                                )
+                            }
+                        />
                     </Routes>
                 </div>
             </>
