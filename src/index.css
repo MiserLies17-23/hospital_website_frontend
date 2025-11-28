@@ -190,3 +190,28 @@ button:focus, button:focus-visible {
 .alert {
     margin-top: 15px;
 }
+
+/* Стили для системы записи к врачу */
+.doctor-appointment {
+    max-width: 100%;
+}
+
+.doctor-appointment .card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid #e9ecef;
+}
+
+.doctor-appointment .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.doctor-appointment .form-label {
+    font-weight: 600;
+    color: #495057;
+}
+
+.doctor-appointment .btn-primary {
+    padding: 10px 30px;
+    font-size: 1.1rem;
+}

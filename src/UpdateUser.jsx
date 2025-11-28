@@ -5,9 +5,15 @@ import axios from 'axios';
 function UpdateUser() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const [user, setUser] = useState({});
+    const [user, setUser] = useState({
+        username: '',
+        email: '',
+        role: '',
+        avatar: ''
+    });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [avatarLoading, setAvatarLoading] = useState(false);
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -41,7 +47,7 @@ function UpdateUser() {
             return;
         }
 
-        setLoading(true);
+        setAvatarLoading(true);
         setError('');
 
         const formData = new FormData();
@@ -63,27 +69,49 @@ function UpdateUser() {
             console.error('Ошибка при загрузке аватара:', error);
             setError('Не удалось загрузить аватар');
         } finally {
-            setLoading(false);
+            setAvatarLoading(false);
             event.target.value = '';
         }
     };
 
     const handleUpdate = async (e) => {
         e.preventDefault();
-        // Логика для обновления пользователя
-        console.log('Update user:', user);
+        setLoading(true);
+
+        try {
+            await axios.put(`http://localhost:8080/update/${id}`, user, {
+                withCredentials: true,
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
+            alert('Данные пользователя успешно обновлены!');
+            navigate('/admin-panel');
+        } catch (error) {
+            console.error('Ошибка при обновлении:', error);
+            setError('Не удалось обновить данные пользователя');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setUser(prev => ({
+            ...prev,
+            [name]: value
+        }));
     };
 
     return (
         <div className="container mt-5">
             <h2 className="text-center mb-4">Редактирование пользователя</h2>
-            {error && <p className="text-danger text-center">{error}</p>}
+            {error && <div className="alert alert-danger text-center">{error}</div>}
 
             <div className="row justify-content-center">
                 <div className="col-md-8">
                     <div className="card">
                         <div className="card-body">
-                            {/* Блок аватара */}
                             <div className="text-center mb-4">
                                 <div className="avatar-container position-relative d-inline-block">
                                     {user.avatar ? (
@@ -114,6 +142,14 @@ function UpdateUser() {
                                             <span>Нет аватара</span>
                                         </div>
                                     )}
+
+                                    {avatarLoading && (
+                                        <div className="position-absolute top-50 start-50 translate-middle">
+                                            <div className="spinner-border text-primary" role="status">
+                                                <span className="visually-hidden">Загрузка...</span>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="mt-3">
@@ -123,13 +159,13 @@ function UpdateUser() {
                                         accept="image/*"
                                         onChange={handleAvatarUpload}
                                         style={{ display: 'none' }}
-                                        disabled={loading}
+                                        disabled={avatarLoading}
                                     />
                                     <label
                                         htmlFor="admin-avatar-upload"
-                                        className={`btn btn-primary btn-sm ${loading ? 'disabled' : ''}`}
+                                        className={`btn btn-primary btn-sm ${avatarLoading ? 'disabled' : ''}`}
                                     >
-                                        {loading ? 'Загрузка...' : 'Изменить аватар'}
+                                        {avatarLoading ? 'Загрузка...' : 'Изменить аватар'}
                                     </label>
                                 </div>
                             </div>
@@ -140,8 +176,10 @@ function UpdateUser() {
                                     <input
                                         type="text"
                                         className="form-control"
+                                        name="username"
                                         value={user.username || ''}
-                                        onChange={(e) => setUser({...user, username: e.target.value})}
+                                        onChange={handleChange}
+                                        required
                                     />
                                 </div>
 
@@ -150,8 +188,10 @@ function UpdateUser() {
                                     <input
                                         type="email"
                                         className="form-control"
+                                        name="email"
                                         value={user.email || ''}
-                                        onChange={(e) => setUser({...user, email: e.target.value})}
+                                        onChange={handleChange}
+                                        required
                                     />
                                 </div>
 
@@ -159,19 +199,30 @@ function UpdateUser() {
                                     <label className="form-label">Роль</label>
                                     <select
                                         className="form-select"
+                                        name="role"
                                         value={user.role || ''}
-                                        onChange={(e) => setUser({...user, role: e.target.value})}
+                                        onChange={handleChange}
+                                        required
                                     >
+                                        <option value="">Выберите роль</option>
                                         <option value="USER">USER</option>
                                         <option value="ADMIN">ADMIN</option>
                                     </select>
                                 </div>
 
                                 <div className="text-center">
-                                    <button type="submit" className="btn btn-primary me-2" disabled={loading}>
-                                        Сохранить
+                                    <button
+                                        type="submit"
+                                        className="btn btn-primary me-2"
+                                        disabled={loading}
+                                    >
+                                        {loading ? 'Сохранение...' : 'Сохранить'}
                                     </button>
-                                    <button type="button" className="btn btn-secondary" onClick={() => navigate('/admin-panel')}>
+                                    <button
+                                        type="button"
+                                        className="btn btn-secondary"
+                                        onClick={() => navigate('/admin-panel')}
+                                    >
                                         Отмена
                                     </button>
                                 </div>
