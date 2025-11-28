@@ -41,27 +41,75 @@ body, html {
     color: #646cff;
 }
 
+/* Стили для главной страницы больницы */
 .hospital-page {
     flex: 1;
     display: flex;
     justify-content: center;
     align-items: center;
-    /*background-image: url('../images/hospital.jpg'); /* Замените на изображение больницы */
+    background-image: url('../images/hospital-background.jpg');
     background-size: cover;
     background-position: center;
-    color: #ffffff;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    position: relative;
+    min-height: 100vh;
 }
 
-.hospital-page h1 {
-    font-size: 4rem;
-    margin-bottom: 20px;
+.hospital-page-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1;
 }
 
-.hospital-page p {
+.hospital-content {
+    text-align: center;
+    color: white;
+    position: relative;
+    z-index: 2;
+    max-width: 800px;
+    padding: 2rem;
+    border-radius: 15px;
+    background-color: rgba(0, 0, 0, 0.7);
+    animation: fadeInUp 0.8s ease-out;
+}
+
+.hospital-title {
+    font-size: 3rem;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+}
+
+.hospital-lead {
     font-size: 1.25rem;
-    max-width: 700px;
+    margin-bottom: 1rem;
+    font-weight: 300;
+    line-height: 1.6;
+}
+
+.hospital-text {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
     line-height: 1.5;
+}
+
+.hospital-hours {
+    margin-top: 1.5rem;
+}
+
+.hospital-hours h5 {
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    color: #4dabf7;
+}
+
+.hospital-hours-item {
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
 }
 
 button {
@@ -87,21 +135,7 @@ button.btn-primary:hover {
 button:focus, button:focus-visible {
     outline: 4px auto -webkit-focus-ring-color;
 }
-.main-content {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 20px;
-}
 
-.form-select, .form-control {
-    margin-bottom: 15px;
-}
-
-.alert {
-    margin-top: 15px;
-}
 /* Стили для аватаров */
 .avatar-container {
     transition: all 0.3s ease;
@@ -140,10 +174,19 @@ button:focus, button:focus-visible {
     transition: width 0.3s ease;
 }
 
-/* Адаптивность */
-@media (max-width: 768px) {
-    .avatar-image, .avatar-placeholder {
-        width: 120px !important;
-        height: 120px !important;
-    }
+/* Основной контент */
+.main-content {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px;
+}
+
+.form-select, .form-control {
+    margin-bottom: 15px;
+}
+
+.alert {
+    margin-top: 15px;
 }
