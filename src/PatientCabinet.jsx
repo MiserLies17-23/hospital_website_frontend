@@ -1,7 +1,6 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import DoctorAppointment from './DoctorAppointment';
 
 function PatientCabinet({ onLogout }) {
     const [username, setUsername] = useState('');
@@ -13,6 +12,24 @@ function PatientCabinet({ onLogout }) {
     const [loading, setLoading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
     const navigate = useNavigate();
+
+    // Функция для проверки, является ли аватар дефолтным
+    const isDefaultAvatar = (avatarUrl) => {
+        if (!avatarUrl) return true;
+
+        // Список паттернов для дефолтных аватаров
+        const defaultAvatarPatterns = [
+            'default-avatar',
+            'placeholder',
+            'gravatar',
+            '/images/default',
+            '//www.gravatar.com/avatar/'
+        ];
+
+        return defaultAvatarPatterns.some(pattern =>
+            avatarUrl.includes(pattern)
+        );
+    };
 
     useEffect(() => {
         const fetchUserInfo = async () => {
@@ -93,7 +110,7 @@ function PatientCabinet({ onLogout }) {
 
     // Функция для удаления аватара
     const handleRemoveAvatar = async () => {
-        if (!avatar) return;
+        if (!avatar || isDefaultAvatar(avatar)) return;
 
         try {
             await axios.delete(`http://localhost:8080/user/avatar/${id}`, {
@@ -184,7 +201,8 @@ function PatientCabinet({ onLogout }) {
                                     {avatar ? 'Изменить аватар' : 'Загрузить аватар'}
                                 </label>
 
-                                {avatar && (
+                                {/* Кнопка удаления показывается только для НЕ дефолтных аватаров */}
+                                {avatar && !isDefaultAvatar(avatar) && (
                                     <button
                                         className="btn btn-outline-danger btn-sm ms-2"
                                         onClick={handleRemoveAvatar}
@@ -201,8 +219,10 @@ function PatientCabinet({ onLogout }) {
                         <p className="text-center"><strong>Электронная почта:</strong> {email}</p>
                         <p className="text-center"><strong>Роль:</strong> {role}</p>
 
+                        {/* Блок записи к врачу */}
                         <div className="mt-4 p-3 border rounded">
-                            <DoctorAppointment />
+                            <h4 className="text-center">Функционал записи к врачу</h4>
+                            <p className="text-center">В разработке...</p>
                         </div>
                     </>
                 )}
@@ -223,4 +243,4 @@ function PatientCabinet({ onLogout }) {
     );
 }
 
-export default PatientCabinet;;
+export default PatientCabinet;

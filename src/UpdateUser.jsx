@@ -15,6 +15,23 @@ function UpdateUser() {
     const [loading, setLoading] = useState(false);
     const [avatarLoading, setAvatarLoading] = useState(false);
 
+    // Функция для проверки, является ли аватар дефолтным
+    const isDefaultAvatar = (avatarUrl) => {
+        if (!avatarUrl) return true;
+
+        const defaultAvatarPatterns = [
+            'default-avatar',
+            'placeholder',
+            'gravatar',
+            '/images/default',
+            '//www.gravatar.com/avatar/'
+        ];
+
+        return defaultAvatarPatterns.some(pattern =>
+            avatarUrl.includes(pattern)
+        );
+    };
+
     useEffect(() => {
         const fetchUser = async () => {
             try {
@@ -74,6 +91,23 @@ function UpdateUser() {
         }
     };
 
+    // Функция для удаления аватара
+    const handleRemoveAvatar = async () => {
+        if (!user.avatar || isDefaultAvatar(user.avatar)) return;
+
+        try {
+            await axios.delete(`http://localhost:8080/user/avatar/${id}`, {
+                withCredentials: true,
+            });
+
+            setUser(prev => ({ ...prev, avatar: null }));
+            alert('Аватар удален!');
+        } catch (error) {
+            console.error('Ошибка при удалении аватара:', error);
+            setError('Не удалось удалить аватар');
+        }
+    };
+
     const handleUpdate = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -112,6 +146,7 @@ function UpdateUser() {
                 <div className="col-md-8">
                     <div className="card">
                         <div className="card-body">
+                            {/* Блок аватара */}
                             <div className="text-center mb-4">
                                 <div className="avatar-container position-relative d-inline-block">
                                     {user.avatar ? (
@@ -167,6 +202,17 @@ function UpdateUser() {
                                     >
                                         {avatarLoading ? 'Загрузка...' : 'Изменить аватар'}
                                     </label>
+
+                                    {/* Кнопка удаления показывается только для НЕ дефолтных аватаров */}
+                                    {user.avatar && !isDefaultAvatar(user.avatar) && (
+                                        <button
+                                            className="btn btn-outline-danger btn-sm ms-2"
+                                            onClick={handleRemoveAvatar}
+                                            disabled={avatarLoading}
+                                        >
+                                            Удалить
+                                        </button>
+                                    )}
                                 </div>
                             </div>
 

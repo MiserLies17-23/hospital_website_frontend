@@ -49,6 +49,11 @@ function App() {
         }
     };
 
+    // Функция для обновления состояния после успешного входа/регистрации
+    const handleAuthSuccess = async () => {
+        await checkAuth();
+    };
+
     useEffect(() => {
         checkAuth();
     }, []);
@@ -107,8 +112,14 @@ function App() {
                     <Routes>
                         <Route path="/" element={<HospitalPage />} />
                         <Route path="/news" element={<NewsPage />} />
-                        <Route path="/login" element={<LoginPage onLoginSuccess={checkAuth} />} />
-                        <Route path="/signup" element={<SignupPage />} />
+                        <Route
+                            path="/login"
+                            element={<LoginPage onLoginSuccess={handleAuthSuccess} />}
+                        />
+                        <Route
+                            path="/signup"
+                            element={<SignupPage onSignupSuccess={handleAuthSuccess} />}
+                        />
                         <Route
                             path="/dashboard"
                             element={
