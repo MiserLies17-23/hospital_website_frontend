@@ -31,8 +31,9 @@ function LoginPage({ onLoginSuccess }) {
             );
             console.log('Login successful:', response.data);
 
+            // Вызываем колбэк при успешном входе
             if (onLoginSuccess) {
-                onLoginSuccess();
+                await onLoginSuccess();
             }
 
             navigate('/dashboard');

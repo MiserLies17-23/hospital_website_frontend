@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
-function SignUpPage() {
+function SignUpPage({ onSignupSuccess }) {
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -17,7 +17,22 @@ function SignUpPage() {
                 return;
             }
 
+            // Валидация email
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                setError('Пожалуйста, введите корректный email адрес.');
+                return;
+            }
+
+            // Валидация пароля (минимум 6 символов)
+            if (password.length < 6) {
+                setError('Пароль должен содержать минимум 6 символов.');
+                return;
+            }
+
             setLoading(true);
+            setError('');
+
             const response = await axios.post('http://localhost:8080/user/signup',
                 { username, email, password },
                 {
@@ -28,7 +43,37 @@ function SignUpPage() {
                 }
             );
             console.log('Sign up successful:', response.data);
-            navigate('/login', { state: { message: 'Регистрация прошла успешно! Теперь вы можете войти.' } });
+
+            // После успешной регистрации автоматически входим
+            try {
+                const loginResponse = await axios.post('http://localhost:8080/user/login',
+                    { username, password },
+                    {
+                        withCredentials: true,
+                        headers: {
+                            "Content-Type": "application/json"
+                        }
+                    }
+                );
+                console.log('Auto-login after signup successful');
+
+                // Вызываем колбэк при успешной регистрации
+                if (onSignupSuccess) {
+                    onSignupSuccess();
+                }
+
+                // Перенаправляем сразу в личный кабинет
+                navigate('/dashboard');
+            } catch (loginError) {
+                console.error('Auto-login failed:', loginError);
+                // Если авто-вход не удался, перенаправляем на страницу входа
+                navigate('/login', {
+                    state: {
+                        message: 'Регистрация прошла успешно! Теперь вы можете войти.'
+                    }
+                });
+            }
+
         } catch (error) {
             console.error('Sign up failed:', error.response ? error.response.data : error.message);
             if (error.response) {
@@ -41,7 +86,7 @@ function SignUpPage() {
                     setError('Ошибка при регистрации');
                 }
             } else {
-                setError('Ошибка сети');
+                setError('Ошибка сети. Проверьте подключение к интернету.');
             }
         } finally {
             setLoading(false);
@@ -56,15 +101,17 @@ function SignUpPage() {
 
     return (
         <div className="d-flex justify-content-center align-items-center vh-100">
-            <div className="border rounded-lg p-4" style={{ width: '500px', height: 'auto' }}>
+            <div className="border rounded-lg p-4 bg-white shadow-sm" style={{ width: '500px', height: 'auto' }}>
                 <div className="p-3">
-                    <h2 className="mb-4 text-center">Регистрация в системе больницы</h2>
+                    <h2 className="mb-4 text-center text-primary">Регистрация в системе больницы</h2>
 
                     <div className="mb-3">
+                        <label htmlFor="username" className="form-label">Имя пользователя</label>
                         <input
+                            id="username"
                             type="text"
                             className="form-control"
-                            placeholder='Имя пользователя'
+                            placeholder='Введите имя пользователя'
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                             onKeyPress={handleKeyPress}
@@ -73,10 +120,12 @@ function SignUpPage() {
                     </div>
 
                     <div className="mb-3">
+                        <label htmlFor="email" className="form-label">Электронная почта</label>
                         <input
+                            id="email"
                             type="email"
                             className="form-control"
-                            placeholder='Электронная почта'
+                            placeholder='example@mail.com'
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             onKeyPress={handleKeyPress}
@@ -85,10 +134,12 @@ function SignUpPage() {
                     </div>
 
                     <div className="mb-3">
+                        <label htmlFor="password" className="form-label">Пароль</label>
                         <input
+                            id="password"
                             type="password"
                             className="form-control"
-                            placeholder='Пароль'
+                            placeholder='Введите пароль (мин. 6 символов)'
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             onKeyPress={handleKeyPress}
@@ -96,7 +147,11 @@ function SignUpPage() {
                         />
                     </div>
 
-                    {error && <div className="alert alert-danger mb-3">{error}</div>}
+                    {error && (
+                        <div className="alert alert-danger mb-3" role="alert">
+                            {error}
+                        </div>
+                    )}
 
                     <button
                         className="btn btn-primary w-100 mb-4 custom-btn"
@@ -115,7 +170,9 @@ function SignUpPage() {
 
                     <div className="text-center">
                         <span>Уже есть аккаунт? </span>
-                        <a href="/login" className="text-decoration-none">Войти</a>
+                        <Link to="/login" className="text-decoration-none text-primary fw-semibold">
+                            Войти
+                        </Link>
                     </div>
                 </div>
             </div>

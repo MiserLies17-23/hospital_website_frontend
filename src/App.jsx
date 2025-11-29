@@ -21,6 +21,7 @@ function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userRole, setUserRole] = useState('');
     const [loading, setLoading] = useState(true);
+    const [userData, setUserData] = useState(null);
 
     // Проверка аутентификации при загрузке приложения
     const checkAuth = async () => {
@@ -29,19 +30,30 @@ function App() {
             if (response.status === 200) {
                 setIsAuthenticated(true);
                 // Получаем информацию о пользователе для роли
-                const userResponse = await api.get('/user/dashboard');
-                setUserRole(userResponse.data.role);
+                try {
+                    const userResponse = await api.get('/user/dashboard');
+                    setUserRole(userResponse.data.role);
+                    setUserData(userResponse.data);
+                } catch (userError) {
+                    console.error("Ошибка получения данных пользователя:", userError);
+                }
             }
         } catch (error) {
             if (error.response?.status === 401) {
                 setIsAuthenticated(false);
                 setUserRole('');
+                setUserData(null);
             } else {
                 console.log("Ошибка проверки авторизации:", error.message);
             }
         } finally {
             setLoading(false);
         }
+    };
+
+    // Функция для обновления состояния после успешного входа/регистрации
+    const handleAuthSuccess = async () => {
+        await checkAuth();
     };
 
     useEffect(() => {
@@ -57,6 +69,7 @@ function App() {
                 await api.get("/user/logout");
                 setIsAuthenticated(false);
                 setUserRole('');
+                setUserData(null);
                 navigate('/');
             } catch (error) {
                 console.error("Ошибка при выходе:", error);
@@ -102,8 +115,14 @@ function App() {
                     <Routes>
                         <Route path="/" element={<HospitalPage />} />
                         <Route path="/news" element={<NewsPage />} />
-                        <Route path="/login" element={<LoginPage onLoginSuccess={checkAuth} />} />
-                        <Route path="/signup" element={<SignupPage />} />
+                        <Route
+                            path="/login"
+                            element={<LoginPage onLoginSuccess={handleAuthSuccess} />}
+                        />
+                        <Route
+                            path="/signup"
+                            element={<SignupPage onSignupSuccess={handleAuthSuccess} />}
+                        />
                         <Route
                             path="/dashboard"
                             element={
