@@ -68,15 +68,18 @@ function PatientCabinet({ onLogout }) {
         fetchUserInfo();
     }, []);
 
+    // Функция для загрузки аватара
     const handleAvatarUpload = async (event) => {
         const file = event.target.files[0];
         if (!file) return;
 
+        // Проверяем тип файла
         if (!file.type.startsWith('image/')) {
             setError('Пожалуйста, выберите файл изображения');
             return;
         }
 
+        // Проверяем размер файла (максимум 5MB)
         if (file.size > 5 * 1024 * 1024) {
             setError('Размер файла не должен превышать 5MB');
             return;
@@ -87,8 +90,7 @@ function PatientCabinet({ onLogout }) {
         setUploadProgress(0);
 
         const formData = new FormData();
-        formData.append('avatar', file);
-        formData.append('userId', id);
+        formData.append('file', file);
 
         try {
             const response = await axios.post('http://localhost:8080/user/avatar', formData, {
@@ -104,6 +106,7 @@ function PatientCabinet({ onLogout }) {
                 },
             });
 
+            // Обновляем аватар в состоянии
             setAvatar(response.data.avatarUrl);
             setUploadProgress(0);
             alert('Аватар успешно обновлен!');
@@ -112,27 +115,24 @@ function PatientCabinet({ onLogout }) {
             setError('Не удалось загрузить аватар. Попробуйте еще раз.');
         } finally {
             setLoading(false);
+            // Сбрасываем значение input
             event.target.value = '';
         }
     };
 
+    // Функция для удаления аватара
     const handleRemoveAvatar = async () => {
-        // Двойная проверка: только для загруженных пользователем аватаров
-        if (!avatar || !isUserUploadedAvatar(avatar)) {
-            alert('Нельзя удалить стандартный аватар');
-            return;
-        }
-
-        if (!window.confirm('Вы уверены, что хотите удалить аватар?')) {
-            return;
-        }
+        if (!avatar || isDefaultAvatar(avatar)) return;
 
         try {
-            await axios.delete(`http://localhost:8080/user/avatar/${id}`, {
+            await axios.delete(`http://localhost:8080/user/avatar/`, {
                 withCredentials: true,
             });
 
-            // После удаления устанавливаем null или дефолтный аватар
+            const response = await axios.get('http://localhost:8080/user/dashboard', {
+                withCredentials: true
+            });
+
             setAvatar(null);
             alert('Аватар удален!');
         } catch (error) {
