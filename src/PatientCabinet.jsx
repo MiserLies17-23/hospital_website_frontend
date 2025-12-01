@@ -1,6 +1,7 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import DoctorAppointment from './DoctorAppointment';
 
 function PatientCabinet({ onLogout }) {
     const [username, setUsername] = useState('');
@@ -228,8 +229,7 @@ function PatientCabinet({ onLogout }) {
 
                         {/* Блок записи к врачу */}
                         <div className="mt-4 p-3 border rounded">
-                            <h4 className="text-center">Функционал записи к врачу</h4>
-                            <p className="text-center">В разработке...</p>
+                            <DoctorAppointment />
                         </div>
                     </>
                 )}
