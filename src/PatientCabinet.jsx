@@ -19,7 +19,7 @@ function PatientCabinet({ onLogout }) {
 
         // Список паттернов для дефолтных аватаров
         const defaultAvatarPatterns = [
-            'default-avatar',
+            'default',
             'placeholder',
             'gravatar',
             '/images/default',
@@ -122,9 +122,10 @@ function PatientCabinet({ onLogout }) {
             const response = await axios.get('http://localhost:8080/user/dashboard', {
                 withCredentials: true
             });
-            console.log(response.data);
-            setAvatar(null);
+            //console.log(response.data);
+            setAvatar(response.data.avatar);
             alert('Аватар удален!');
+
         } catch (error) {
             console.error('Ошибка при удалении аватара:', error);
             setError('Не удалось удалить аватар');
