@@ -115,14 +115,14 @@ function PatientCabinet({ onLogout }) {
         if (!avatar || isDefaultAvatar(avatar)) return;
 
         try {
-            await axios.delete(`http://localhost:8080/user/avatar/`, {
+            await axios.delete(`http://localhost:8080/user/avatar`, {
                 withCredentials: true,
             });
 
             const response = await axios.get('http://localhost:8080/user/dashboard', {
                 withCredentials: true
             });
-
+            console.log(response.data);
             setAvatar(null);
             alert('Аватар удален!');
         } catch (error) {
