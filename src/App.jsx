@@ -27,24 +27,23 @@ function App() {
     const checkAuth = async () => {
         try {
             const response = await api.get("/user/checklogin");
-            if (response.status === 200) {
+
+            if (response.data.authenticated) {
                 setIsAuthenticated(true);
-                // Получаем информацию о пользователе для роли
-                try {
-                    const userResponse = await api.get('/user/dashboard');
-                    setUserRole(userResponse.data.role);
-                    setUserData(userResponse.data);
-                } catch (userError) {
-                    console.error("Ошибка получения данных пользователя:", userError);
-                }
+                setUserRole(response.data.role || 'USER');
+            } else {
+                setIsAuthenticated(false);
+                setUserRole('VISITOR');
             }
         } catch (error) {
             if (error.response?.status === 401) {
+                console.log("User not authenticated (401)");
                 setIsAuthenticated(false);
                 setUserRole('');
-                setUserData(null);
             } else {
-                console.log("Ошибка проверки авторизации:", error.message);
+                console.error("Other error:", error);
+                setIsAuthenticated(false);
+                setUserRole('');
             }
         } finally {
             setLoading(false);

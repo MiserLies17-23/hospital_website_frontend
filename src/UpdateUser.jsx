@@ -15,21 +15,14 @@ function UpdateUser() {
     const [loading, setLoading] = useState(false);
     const [avatarLoading, setAvatarLoading] = useState(false);
 
-    // Функция для проверки, является ли аватар дефолтным
-    const isDefaultAvatar = (avatarUrl) => {
-        if (!avatarUrl) return true;
+    // Функция для проверки загруженных пользователем аватаров
+    const isUserUploadedAvatar = (avatarUrl) => {
+        if (!avatarUrl) return false;
 
-        const defaultAvatarPatterns = [
-            'default-avatar',
-            'placeholder',
-            'gravatar',
-            '/images/default',
-            '//www.gravatar.com/avatar/'
-        ];
-
-        return defaultAvatarPatterns.some(pattern =>
-            avatarUrl.includes(pattern)
-        );
+        return avatarUrl.includes('/uploads/') ||
+            avatarUrl.includes('/user-avatars/') ||
+            avatarUrl.includes(`/avatar/${id}`) ||
+            avatarUrl.startsWith('http://localhost:8080/uploads/');
     };
 
     useEffect(() => {
@@ -49,7 +42,6 @@ function UpdateUser() {
         fetchUser();
     }, [id]);
 
-    // Функция для загрузки аватара
     const handleAvatarUpload = async (event) => {
         const file = event.target.files[0];
         if (!file) return;
@@ -79,7 +71,6 @@ function UpdateUser() {
                 },
             });
 
-            // Обновляем аватар пользователя
             setUser(prev => ({ ...prev, avatar: response.data.avatarUrl }));
             alert('Аватар успешно обновлен!');
         } catch (error) {
@@ -91,12 +82,19 @@ function UpdateUser() {
         }
     };
 
-    // Функция для удаления аватара
     const handleRemoveAvatar = async () => {
-        if (!user.avatar || isDefaultAvatar(user.avatar)) return;
+        // Проверяем, что аватар загружен пользователем
+        if (!user.avatar || !isUserUploadedAvatar(user.avatar)) {
+            alert('Нельзя удалить стандартный аватар');
+            return;
+        }
+
+        if (!window.confirm('Вы уверены, что хотите удалить аватар?')) {
+            return;
+        }
 
         try {
-            await axios.delete(`http://localhost:8080/user/remove-avatar/${id}`, {
+            await axios.delete(`http://localhost:8080/user/avatar/${id}`, {
                 withCredentials: true,
             });
 
@@ -146,7 +144,6 @@ function UpdateUser() {
                 <div className="col-md-8">
                     <div className="card">
                         <div className="card-body">
-                            {/* Блок аватара */}
                             <div className="text-center mb-4">
                                 <div className="avatar-container position-relative d-inline-block">
                                     {user.avatar ? (
@@ -203,8 +200,8 @@ function UpdateUser() {
                                         {avatarLoading ? 'Загрузка...' : 'Изменить аватар'}
                                     </label>
 
-                                    {/* Кнопка удаления показывается только для НЕ дефолтных аватаров */}
-                                    {user.avatar && !isDefaultAvatar(user.avatar) && (
+                                    {/* Кнопка удаления показывается ТОЛЬКО для загруженных аватаров */}
+                                    {user.avatar && isUserUploadedAvatar(user.avatar) && (
                                         <button
                                             className="btn btn-outline-danger btn-sm ms-2"
                                             onClick={handleRemoveAvatar}

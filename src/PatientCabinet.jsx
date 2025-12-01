@@ -13,22 +13,35 @@ function PatientCabinet({ onLogout }) {
     const [uploadProgress, setUploadProgress] = useState(0);
     const navigate = useNavigate();
 
-    // Функция для проверки, является ли аватар дефолтным
+    // Улучшенная функция для проверки дефолтного аватара
     const isDefaultAvatar = (avatarUrl) => {
         if (!avatarUrl) return true;
 
-        // Список паттернов для дефолтных аватаров
+        // Более надежная проверка дефолтных аватаров
         const defaultAvatarPatterns = [
             'default-avatar',
             'placeholder',
             'gravatar',
             '/images/default',
-            '//www.gravatar.com/avatar/'
+            '//www.gravatar.com/avatar/',
+            'data:image/svg+xml', // SVG placeholder
+            '/img/avatar' // общий паттерн
         ];
 
         return defaultAvatarPatterns.some(pattern =>
-            avatarUrl.includes(pattern)
+            avatarUrl.toLowerCase().includes(pattern.toLowerCase())
         );
+    };
+
+    // Функция для проверки, был ли аватар загружен пользователем
+    const isUserUploadedAvatar = (avatarUrl) => {
+        if (!avatarUrl) return false;
+
+        // Если URL содержит путь к загруженным файлам или ID пользователя
+        return avatarUrl.includes('/uploads/') ||
+            avatarUrl.includes('/user-avatars/') ||
+            avatarUrl.includes(`/avatar/${id}`) ||
+            avatarUrl.startsWith('http://localhost:8080/uploads/');
     };
 
     useEffect(() => {
@@ -55,18 +68,15 @@ function PatientCabinet({ onLogout }) {
         fetchUserInfo();
     }, []);
 
-    // Функция для загрузки аватара
     const handleAvatarUpload = async (event) => {
         const file = event.target.files[0];
         if (!file) return;
 
-        // Проверяем тип файла
         if (!file.type.startsWith('image/')) {
             setError('Пожалуйста, выберите файл изображения');
             return;
         }
 
-        // Проверяем размер файла (максимум 5MB)
         if (file.size > 5 * 1024 * 1024) {
             setError('Размер файла не должен превышать 5MB');
             return;
@@ -81,7 +91,7 @@ function PatientCabinet({ onLogout }) {
         formData.append('userId', id);
 
         try {
-            const response = await axios.post('http://localhost:8080/user/upload-avatar', formData, {
+            const response = await axios.post('http://localhost:8080/user/avatar', formData, {
                 withCredentials: true,
                 headers: {
                     'Content-Type': 'multipart/form-data',
@@ -94,7 +104,6 @@ function PatientCabinet({ onLogout }) {
                 },
             });
 
-            // Обновляем аватар в состоянии
             setAvatar(response.data.avatarUrl);
             setUploadProgress(0);
             alert('Аватар успешно обновлен!');
@@ -103,20 +112,27 @@ function PatientCabinet({ onLogout }) {
             setError('Не удалось загрузить аватар. Попробуйте еще раз.');
         } finally {
             setLoading(false);
-            // Сбрасываем значение input
             event.target.value = '';
         }
     };
 
-    // Функция для удаления аватара
     const handleRemoveAvatar = async () => {
-        if (!avatar || isDefaultAvatar(avatar)) return;
+        // Двойная проверка: только для загруженных пользователем аватаров
+        if (!avatar || !isUserUploadedAvatar(avatar)) {
+            alert('Нельзя удалить стандартный аватар');
+            return;
+        }
+
+        if (!window.confirm('Вы уверены, что хотите удалить аватар?')) {
+            return;
+        }
 
         try {
-            await axios.delete(`http://localhost:8080/user/remove-avatar/${id}`, {
+            await axios.delete(`http://localhost:8080/user/avatar/${id}`, {
                 withCredentials: true,
             });
 
+            // После удаления устанавливаем null или дефолтный аватар
             setAvatar(null);
             alert('Аватар удален!');
         } catch (error) {
@@ -169,7 +185,6 @@ function PatientCabinet({ onLogout }) {
                                     </div>
                                 )}
 
-                                {/* Индикатор загрузки */}
                                 {loading && (
                                     <div className="position-absolute top-50 start-50 translate-middle">
                                         <div className="spinner-border text-primary" role="status">
@@ -184,7 +199,6 @@ function PatientCabinet({ onLogout }) {
                                 )}
                             </div>
 
-                            {/* Кнопки управления аватаром */}
                             <div className="mt-3">
                                 <input
                                     type="file"
@@ -201,8 +215,8 @@ function PatientCabinet({ onLogout }) {
                                     {avatar ? 'Изменить аватар' : 'Загрузить аватар'}
                                 </label>
 
-                                {/* Кнопка удаления показывается только для НЕ дефолтных аватаров */}
-                                {avatar && !isDefaultAvatar(avatar) && (
+                                {/* Кнопка удаления показывается ТОЛЬКО для загруженных пользователем аватаров */}
+                                {avatar && isUserUploadedAvatar(avatar) && (
                                     <button
                                         className="btn btn-outline-danger btn-sm ms-2"
                                         onClick={handleRemoveAvatar}
@@ -219,7 +233,6 @@ function PatientCabinet({ onLogout }) {
                         <p className="text-center"><strong>Электронная почта:</strong> {email}</p>
                         <p className="text-center"><strong>Роль:</strong> {role}</p>
 
-                        {/* Блок записи к врачу */}
                         <div className="mt-4 p-3 border rounded">
                             <h4 className="text-center">Функционал записи к врачу</h4>
                             <p className="text-center">В разработке...</p>
