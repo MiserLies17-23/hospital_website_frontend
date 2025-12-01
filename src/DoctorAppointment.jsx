@@ -38,6 +38,7 @@ function DoctorAppointment() {
         setSuccess('');
 
         try {
+
             // В реальном приложении здесь будет запрос к API
             await new Promise(resolve => setTimeout(resolve, 1000)); // Имитация запроса
 

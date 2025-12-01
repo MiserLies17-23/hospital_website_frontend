@@ -77,8 +77,7 @@ function PatientCabinet({ onLogout }) {
         setUploadProgress(0);
 
         const formData = new FormData();
-        formData.append('avatar', file);
-        formData.append('userId', id);
+        formData.append('file', file);
 
         try {
             const response = await axios.post('http://localhost:8080/user/avatar', formData, {
@@ -93,11 +92,14 @@ function PatientCabinet({ onLogout }) {
                     setUploadProgress(percentCompleted);
                 },
             });
-
-            // Обновляем аватар в состоянии
-            setAvatar(response.data.avatarUrl);
             setUploadProgress(0);
             alert('Аватар успешно обновлен!');
+
+            // Обновляем информацию о пользователе
+            const userResponse = await axios.get('http://localhost:8080/user/dashboard', {
+                withCredentials: true
+            });
+            setAvatar(userResponse.data.avatar);
         } catch (error) {
             console.error('Ошибка при загрузке аватара:', error);
             setError('Не удалось загрузить аватар. Попробуйте еще раз.');
@@ -113,8 +115,12 @@ function PatientCabinet({ onLogout }) {
         if (!avatar || isDefaultAvatar(avatar)) return;
 
         try {
-            await axios.delete(`http://localhost:8080/user/avatar/${id}`, {
+            await axios.delete(`http://localhost:8080/user/avatar/`, {
                 withCredentials: true,
+            });
+
+            const response = await axios.get('http://localhost:8080/user/dashboard', {
+                withCredentials: true
             });
 
             setAvatar(null);
