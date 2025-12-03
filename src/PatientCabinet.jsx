@@ -1,7 +1,6 @@
-import axios from 'axios';
+import api from './Api/Api.jsx';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import DoctorAppointment from './DoctorAppointment';
 
 function PatientCabinet({ onLogout }) {
     const [username, setUsername] = useState('');
@@ -9,6 +8,8 @@ function PatientCabinet({ onLogout }) {
     const [role, setRole] = useState('');
     const [id, setId] = useState('');
     const [avatar, setAvatar] = useState(null);
+    const [appointments, setAppointments] = useState([]);
+    const [loadingAppointments, setLoadingAppointments] = useState(true);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
@@ -18,7 +19,6 @@ function PatientCabinet({ onLogout }) {
     const isDefaultAvatar = (avatarUrl) => {
         if (!avatarUrl) return true;
 
-        // Список паттернов для дефолтных аватаров
         const defaultAvatarPatterns = [
             'default',
             'placeholder',
@@ -32,10 +32,11 @@ function PatientCabinet({ onLogout }) {
         );
     };
 
+    // Загрузка информации о пользователе и записях
     useEffect(() => {
         const fetchUserInfo = async () => {
             try {
-                const response = await axios.get('http://localhost:8080/user/dashboard', {
+                const response = await api.get('/user/dashboard', {
                     withCredentials: true,
                     headers: {
                         "Content-Type": "application/json"
@@ -53,7 +54,22 @@ function PatientCabinet({ onLogout }) {
             }
         };
 
+        const fetchUserAppointments = async () => {
+            try {
+                const response = await api.get('/user/appointments', {
+                    withCredentials: true,
+                    headers: { "Content-Type": "application/json" }
+                });
+                setAppointments(response.data);
+            } catch (error) {
+                console.error('Ошибка при загрузке записей:', error);
+            } finally {
+                setLoadingAppointments(false);
+            }
+        };
+
         fetchUserInfo();
+        fetchUserAppointments();
     }, []);
 
     // Функция для загрузки аватара
@@ -61,13 +77,11 @@ function PatientCabinet({ onLogout }) {
         const file = event.target.files[0];
         if (!file) return;
 
-        // Проверяем тип файла
         if (!file.type.startsWith('image/')) {
             setError('Пожалуйста, выберите файл изображения');
             return;
         }
 
-        // Проверяем размер файла (максимум 5MB)
         if (file.size > 5 * 1024 * 1024) {
             setError('Размер файла не должен превышать 5MB');
             return;
@@ -81,7 +95,7 @@ function PatientCabinet({ onLogout }) {
         formData.append('file', file);
 
         try {
-            const response = await axios.post('http://localhost:8080/user/avatar', formData, {
+            const response = await api.post('/user/avatar', formData, {
                 withCredentials: true,
                 headers: {
                     'Content-Type': 'multipart/form-data',
@@ -96,8 +110,7 @@ function PatientCabinet({ onLogout }) {
             setUploadProgress(0);
             alert('Аватар успешно обновлен!');
 
-            // Обновляем информацию о пользователе
-            const userResponse = await axios.get('http://localhost:8080/user/dashboard', {
+            const userResponse = await api.get('/user/dashboard', {
                 withCredentials: true
             });
             setAvatar(userResponse.data.avatar);
@@ -106,7 +119,6 @@ function PatientCabinet({ onLogout }) {
             setError('Не удалось загрузить аватар. Попробуйте еще раз.');
         } finally {
             setLoading(false);
-            // Сбрасываем значение input
             event.target.value = '';
         }
     };
@@ -116,14 +128,13 @@ function PatientCabinet({ onLogout }) {
         if (!avatar || isDefaultAvatar(avatar)) return;
 
         try {
-            await axios.delete(`http://localhost:8080/user/avatar`, {
+            await api.delete(`/user/avatar`, {
                 withCredentials: true,
             });
 
-            const response = await axios.get('http://localhost:8080/user/dashboard', {
+            const response = await api.get('/user/dashboard', {
                 withCredentials: true
             });
-            //console.log(response.data);
             setAvatar(response.data.avatar);
             alert('Аватар удален!');
 
@@ -133,19 +144,43 @@ function PatientCabinet({ onLogout }) {
         }
     };
 
-    const handleAdminPanelClick = () => {
-        navigate('/admin-panel');
+    // Функция для отмены записи
+    const handleCancelAppointment = async (appointmentId) => {
+        if (!window.confirm('Вы уверены, что хотите отменить запись?')) return;
+
+        try {
+            await api.delete(`/user/appointments/${appointmentId}`, {
+                withCredentials: true,
+                headers: { "Content-Type": "application/json" }
+            });
+
+            const updatedAppointments = appointments.filter(app => app.id !== appointmentId);
+            setAppointments(updatedAppointments);
+            alert('Запись успешно отменена!');
+        } catch (error) {
+            console.error('Ошибка при отмене записи:', error);
+            setError('Не удалось отменить запись');
+        }
     };
+
+    // Форматирование даты
+    const formatDate = (dateString) => {
+        const options = { day: 'numeric', month: 'long', year: 'numeric' };
+        return new Date(dateString).toLocaleDateString('ru-RU', options);
+    };
+
+    const handleAdminPanelClick = () => navigate('/admin-panel');
+    const handleNewAppointmentClick = () => navigate('/appointment');
 
     return (
         <div className="d-flex justify-content-center align-items-center vh-100">
-            <div className="border rounded-lg p-4" style={{ width: '600px', height: 'auto', minHeight: '500px' }}>
+            <div className="border rounded-lg p-4" style={{ width: '800px', height: 'auto', minHeight: '600px' }}>
                 <h2 className="text-center">Кабинет пациента</h2>
                 {error ? (
                     <p className="text-danger text-center">{error}</p>
                 ) : (
                     <>
-                        {/* Блок аватара */}
+                        {/* Блок аватара (старый дизайн) */}
                         <div className="text-center mb-4">
                             <div className="avatar-container position-relative d-inline-block">
                                 {avatar ? (
@@ -177,7 +212,6 @@ function PatientCabinet({ onLogout }) {
                                     </div>
                                 )}
 
-                                {/* Индикатор загрузки */}
                                 {loading && (
                                     <div className="position-absolute top-50 start-50 translate-middle">
                                         <div className="spinner-border text-primary" role="status">
@@ -192,7 +226,6 @@ function PatientCabinet({ onLogout }) {
                                 )}
                             </div>
 
-                            {/* Кнопки управления аватаром */}
                             <div className="mt-3">
                                 <input
                                     type="file"
@@ -209,7 +242,6 @@ function PatientCabinet({ onLogout }) {
                                     {avatar ? 'Изменить аватар' : 'Загрузить аватар'}
                                 </label>
 
-                                {/* Кнопка удаления показывается только для НЕ дефолтных аватаров */}
                                 {avatar && !isDefaultAvatar(avatar) && (
                                     <button
                                         className="btn btn-outline-danger btn-sm ms-2"
@@ -222,17 +254,94 @@ function PatientCabinet({ onLogout }) {
                             </div>
                         </div>
 
-                        <p className="text-center"><strong>ID:</strong> {id}</p>
-                        <p className="text-center"><strong>Имя пользователя:</strong> {username}</p>
-                        <p className="text-center"><strong>Электронная почта:</strong> {email}</p>
-                        <p className="text-center"><strong>Роль:</strong> {role}</p>
+                        {/* Информация о пользователе (старый дизайн) */}
+                        <div className="text-center mb-4">
+                            <p><strong>ID:</strong> {id}</p>
+                            <p><strong>Имя пользователя:</strong> {username}</p>
+                            <p><strong>Электронная почта:</strong> {email}</p>
+                            <p><strong>Роль:</strong> {role}</p>
+                        </div>
 
-                        {/* Блок записи к врачу */}
+                        {/* Кнопка для новой записи */}
+                        <div className="text-center mb-4">
+                            <button
+                                className="btn btn-success"
+                                onClick={handleNewAppointmentClick}
+                            >
+                                <i className="bi bi-calendar-plus me-2"></i>
+                                Новая запись к врачу
+                            </button>
+                        </div>
+
+                        {/* Блок с записями пользователя */}
                         <div className="mt-4 p-3 border rounded">
-                            <DoctorAppointment />
+                            <h4 className="text-center mb-3">Мои записи</h4>
+
+                            {loadingAppointments ? (
+                                <div className="text-center py-4">
+                                    <div className="spinner-border spinner-border-sm text-primary" role="status">
+                                        <span className="visually-hidden">Загрузка...</span>
+                                    </div>
+                                    <p className="mt-2">Загрузка записей...</p>
+                                </div>
+                            ) : appointments.length === 0 ? (
+                                <div className="text-center py-3">
+                                    <i className="bi bi-calendar-x text-muted" style={{ fontSize: '3rem' }}></i>
+                                    <p className="mt-2 text-muted">У вас нет активных записей</p>
+                                    <button
+                                        className="btn btn-sm btn-outline-primary mt-2"
+                                        onClick={handleNewAppointmentClick}
+                                    >
+                                        Записаться на прием
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="table-responsive">
+                                    <table className="table table-hover table-sm">
+                                        <thead>
+                                        <tr>
+                                            <th>Врач</th>
+                                            <th>Специализация</th>
+                                            <th>Дата</th>
+                                            <th>Время</th>
+                                            <th>Статус</th>
+                                            <th>Действия</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        {appointments.map(appointment => (
+                                            <tr key={appointment.id}>
+                                                <td>{appointment.doctorName}</td>
+                                                <td>{appointment.doctorSpecialization}</td>
+                                                <td>{formatDate(appointment.appointmentDate)}</td>
+                                                <td>{appointment.appointmentTime}</td>
+                                                <td>
+                                                        <span className={`badge bg-${appointment.status === 'SCHEDULED' ? 'primary' :
+                                                            appointment.status === 'COMPLETED' ? 'success' : 'secondary'}`}>
+                                                            {appointment.status === 'SCHEDULED' ? 'Запланировано' :
+                                                                appointment.status === 'COMPLETED' ? 'Завершено' : 'Отменено'}
+                                                        </span>
+                                                </td>
+                                                <td>
+                                                    {appointment.status === 'SCHEDULED' && (
+                                                        <button
+                                                            className="btn btn-sm btn-outline-danger"
+                                                            onClick={() => handleCancelAppointment(appointment.id)}
+                                                        >
+                                                            Отменить
+                                                        </button>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
                         </div>
                     </>
                 )}
+
                 <div className="text-center mt-4">
                     {role === "ADMIN" && (
                         <button type="button" className="btn btn-primary" onClick={handleAdminPanelClick}>
@@ -240,6 +349,7 @@ function PatientCabinet({ onLogout }) {
                         </button>
                     )}
                 </div>
+
                 <div className="text-center">
                     <button type="button" className="btn btn-danger mt-3" onClick={onLogout}>
                         Выйти

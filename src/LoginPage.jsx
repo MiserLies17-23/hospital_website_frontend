@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from './Api/Api.jsx';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -21,7 +21,7 @@ function LoginPage({ onLoginSuccess }) {
             }
 
             setLoading(true);
-            const response = await axios.post('http://localhost:8080/user/login', { username, password },
+            const response = await api.post('/user/login', { username, password },
                 {
                     withCredentials: true,
                     headers: {

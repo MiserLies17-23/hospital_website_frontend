@@ -1,25 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from './Api/Api.jsx';
+import './index.css';
+import { Link } from 'react-router-dom';
 
-function DoctorAppointment() {
+function DoctorAppointment({ isAuthenticated }) {
     const [doctors, setDoctors] = useState([]);
-    const [appointments, setAppointments] = useState([]); // Добавляем состояние для записей
     const [selectedDoctor, setSelectedDoctor] = useState('');
     const [appointmentDate, setAppointmentDate] = useState('');
     const [appointmentTime, setAppointmentTime] = useState('');
     const [symptoms, setSymptoms] = useState('');
     const [loading, setLoading] = useState(false);
     const [loadingDoctors, setLoadingDoctors] = useState(true);
-    const [loadingAppointments, setLoadingAppointments] = useState(true);
     const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
+    const [showAuthModal, setShowAuthModal] = useState(false);
 
     // Загрузка списка врачей с бэкенда
     useEffect(() => {
         const fetchDoctors = async () => {
             try {
-                // Предполагаемый эндпоинт для получения врачей
-                const response = await axios.get('http://localhost:8080/api/doctors', {
+                const response = await api.get('/doctor/doctors', {
                     withCredentials: true,
                     headers: {
                         "Content-Type": "application/json"
@@ -28,7 +28,6 @@ function DoctorAppointment() {
                 setDoctors(response.data);
             } catch (error) {
                 console.error('Ошибка при загрузке врачей:', error);
-                // Если эндпоинт не настроен, используем mock данные как fallback
                 const mockDoctors = [
                     { id: 1, name: 'Доктор Иванов', specialization: 'Терапевт', experience: '15 лет' },
                     { id: 2, name: 'Доктор Петрова', specialization: 'Хирург', experience: '12 лет' },
@@ -42,29 +41,17 @@ function DoctorAppointment() {
             }
         };
 
-        const fetchUserAppointments = async () => {
-            try {
-                // Эндпоинт для получения записей пользователя
-                const response = await axios.get('http://localhost:8080/api/appointments', {
-                    withCredentials: true,
-                    headers: {
-                        "Content-Type": "application/json"
-                    }
-                });
-                setAppointments(response.data);
-            } catch (error) {
-                console.error('Ошибка при загрузке записей:', error);
-            } finally {
-                setLoadingAppointments(false);
-            }
-        };
-
         fetchDoctors();
-        fetchUserAppointments();
     }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Проверка авторизации
+        if (!isAuthenticated) {
+            setShowAuthModal(true);
+            return;
+        }
 
         if (!selectedDoctor || !appointmentDate || !appointmentTime) {
             setError('Пожалуйста, заполните все обязательные поля');
@@ -76,39 +63,27 @@ function DoctorAppointment() {
         setSuccess('');
 
         try {
-            // Отправка данных на бэкенд
-            const response = await axios.post(
-                'http://localhost:8080/api/appointments',
+            const response = await api.post(
+                '/appointments',
                 {
                     doctorId: selectedDoctor,
                     appointmentDate: appointmentDate,
                     appointmentTime: appointmentTime,
                     symptoms: symptoms,
-                    status: 'SCHEDULED' // начальный статус записи
+                    status: 'SCHEDULED'
                 },
                 {
                     withCredentials: true,
                     headers: {
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/json; "
                     }
                 }
             );
 
-            // Если запись создана успешно
             if (response.data && response.data.id) {
                 const selectedDoctorData = doctors.find(doc => doc.id === parseInt(selectedDoctor));
                 setSuccess(`Вы успешно записаны на прием к ${selectedDoctorData.name} (${selectedDoctorData.specialization}) на ${appointmentDate} в ${appointmentTime}`);
 
-                // Обновляем список записей
-                const updatedAppointments = await axios.get('http://localhost:8080/api/appointments', {
-                    withCredentials: true,
-                    headers: {
-                        "Content-Type": "application/json"
-                    }
-                });
-                setAppointments(updatedAppointments.data);
-
-                // Сброс формы
                 setSelectedDoctor('');
                 setAppointmentDate('');
                 setAppointmentTime('');
@@ -123,29 +98,6 @@ function DoctorAppointment() {
             }
         } finally {
             setLoading(false);
-        }
-    };
-
-    const handleCancelAppointment = async (appointmentId) => {
-        if (!window.confirm('Вы уверены, что хотите отменить запись?')) {
-            return;
-        }
-
-        try {
-            await axios.delete(`http://localhost:8080/api/appointments/${appointmentId}`, {
-                withCredentials: true,
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            });
-
-            // Обновляем список записей после отмены
-            const updatedAppointments = appointments.filter(app => app.id !== appointmentId);
-            setAppointments(updatedAppointments);
-            setSuccess('Запись успешно отменена');
-        } catch (error) {
-            console.error('Ошибка при отмене записи:', error);
-            setError('Не удалось отменить запись');
         }
     };
 
@@ -176,15 +128,15 @@ function DoctorAppointment() {
         return maxDate.toISOString().split('T')[0];
     };
 
-    // Форматирование даты для отображения
-    const formatDate = (dateString) => {
-        const options = { day: 'numeric', month: 'long', year: 'numeric' };
-        return new Date(dateString).toLocaleDateString('ru-RU', options);
-    };
-
     return (
         <div className="doctor-appointment">
             <h3 className="text-center mb-4">Запись на прием к врачу</h3>
+
+            {!isAuthenticated && (
+                <div className="alert alert-info text-center">
+                    Для записи на прием необходимо <Link to="/login">войти</Link> или <Link to="/signup">зарегистрироваться</Link>
+                </div>
+            )}
 
             {success && <div className="alert alert-success text-center">{success}</div>}
             {error && <div className="alert alert-danger text-center">{error}</div>}
@@ -207,7 +159,7 @@ function DoctorAppointment() {
                                     <option value="">-- Выберите врача --</option>
                                     {doctors.map(doctor => (
                                         <option key={doctor.id} value={doctor.id}>
-                                            {doctor.name} - {doctor.specialization} ({doctor.experience})
+                                            {doctor.name} - {doctor.specialization} ({doctor.phone})
                                         </option>
                                     ))}
                                 </select>
@@ -269,64 +221,6 @@ function DoctorAppointment() {
                 </div>
             </div>
 
-            {/* Список текущих записей */}
-            <div className="card">
-                <div className="card-body">
-                    <h5 className="card-title">Мои записи</h5>
-                    {loadingAppointments ? (
-                        <div className="text-center">
-                            <div className="spinner-border spinner-border-sm" role="status">
-                                <span className="visually-hidden">Загрузка...</span>
-                            </div>
-                            <p>Загрузка записей...</p>
-                        </div>
-                    ) : appointments.length === 0 ? (
-                        <p className="text-muted">У вас нет активных записей к врачам.</p>
-                    ) : (
-                        <div className="table-responsive">
-                            <table className="table table-hover">
-                                <thead>
-                                <tr>
-                                    <th>Врач</th>
-                                    <th>Специализация</th>
-                                    <th>Дата</th>
-                                    <th>Время</th>
-                                    <th>Статус</th>
-                                    <th>Действия</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {appointments.map(appointment => (
-                                    <tr key={appointment.id}>
-                                        <td>{appointment.doctorName}</td>
-                                        <td>{appointment.doctorSpecialization}</td>
-                                        <td>{formatDate(appointment.appointmentDate)}</td>
-                                        <td>{appointment.appointmentTime}</td>
-                                        <td>
-                                                <span className={`badge bg-${appointment.status === 'SCHEDULED' ? 'primary' : 'secondary'}`}>
-                                                    {appointment.status === 'SCHEDULED' ? 'Запланировано' :
-                                                        appointment.status === 'COMPLETED' ? 'Завершено' : 'Отменено'}
-                                                </span>
-                                        </td>
-                                        <td>
-                                            {appointment.status === 'SCHEDULED' && (
-                                                <button
-                                                    className="btn btn-sm btn-outline-danger"
-                                                    onClick={() => handleCancelAppointment(appointment.id)}
-                                                >
-                                                    Отменить
-                                                </button>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </div>
-            </div>
-
             {/* Информация о врачах */}
             <div className="mt-4">
                 <h4 className="text-center mb-4">Наши врачи</h4>
@@ -344,12 +238,7 @@ function DoctorAppointment() {
                                     <div className="card-body text-center">
                                         <h5 className="card-title">{doctor.name}</h5>
                                         <h6 className="card-subtitle mb-2 text-muted">{doctor.specialization}</h6>
-                                        <p className="card-text">Опыт работы: {doctor.experience}</p>
-                                        <p className="card-text">
-                                            <small className="text-muted">
-                                                {doctor.available ? '✅ Принимает пациентов' : '⏸️ Не принимает'}
-                                            </small>
-                                        </p>
+                                        <p className="card-text">Телефон: {doctor.phone}</p>
                                     </div>
                                 </div>
                             </div>
@@ -357,6 +246,58 @@ function DoctorAppointment() {
                     </div>
                 )}
             </div>
+
+            {showAuthModal && (
+                <>
+                    <div className="modal-backdrop">
+                        <div className="modal-window">
+                            {/* Заголовок */}
+                            <div className="modal-header">
+                                <h4 className="modal-title">
+                                    Требуется авторизация
+                                </h4>
+                                <button
+                                    onClick={() => setShowAuthModal(false)}
+                                    className="close-btn"
+                                >
+                                    ×
+                                </button>
+                            </div>
+
+                            {/* Контент */}
+                            <div className="modal-body">
+                                <p className="modal-message">
+                                    Для записи на прием необходимо войти в систему.
+                                </p>
+                            </div>
+
+                            {/* Кнопки */}
+                            <div className="modal-footer">
+                                <Link
+                                    to="/login"
+                                    className="modal-btn btn-login"
+                                    onClick={() => setShowAuthModal(false)}
+                                >
+                                    Войти
+                                </Link>
+                                <Link
+                                    to="/signup"
+                                    className="modal-btn btn-signup"
+                                    onClick={() => setShowAuthModal(false)}
+                                >
+                                    Регистрация
+                                </Link>
+                                <button
+                                    onClick={() => setShowAuthModal(false)}
+                                    className="modal-btn btn-cancel"
+                                >
+                                    Отмена
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     );
 }

@@ -1,4 +1,4 @@
-import axios from 'axios';
+import api from './Api/Api.jsx';
 import React, { useEffect, useState } from 'react';
 
 function CurrentTime() {
@@ -7,7 +7,7 @@ function CurrentTime() {
 
     const fetchInitialTime = async () => {
         try {
-            const response = await axios.get("http://localhost:8080/time");
+            const response = await api.get("/time");
             const parsedTime = parseTime(response.data);
             setTime(parsedTime);
         } catch (error) {

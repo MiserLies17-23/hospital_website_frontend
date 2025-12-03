@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {Link} from 'react-router-dom';
-import axios from 'axios';
+import api from './Api/Api.jsx';
 
 function AdminPanel() {
     const [users, setUsers] = useState([]);
@@ -9,7 +9,7 @@ function AdminPanel() {
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const response = await axios.get('http://localhost:8080/getusers', {
+                const response = await api.get('/getusers', {
                     withCredentials: true,
                     headers: {
                         "Content-Type": "application/json"
@@ -25,7 +25,7 @@ function AdminPanel() {
 
     const deleteUser = async (id) => {
         try {
-            await axios.delete(`http://localhost:8080/delete/${id}`, {
+            await api.delete(`/delete/${id}`, {
                 withCredentials: true,
                 headers: {
                     "Content-Type": "application/json"

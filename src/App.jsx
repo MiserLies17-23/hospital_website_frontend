@@ -1,21 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
-import axios from 'axios';
+import api from './Api/Api.jsx';
 import LoginPage from './LoginPage';
 import SignupPage from './SignUpPage';
 import PatientCabinet from './PatientCabinet';
 import HospitalPage from './HospitalPage';
+import DoctorAppointment from "./DoctorAppointment";
 import CurrentTime from './CurrentTime';
 import NewsPage from './NewsPage';
 import AuthButtons from './AuthButtons';
 import VisitorCount from './VisitorCount';
 import AdminPanel from './AdminPanel';
 import UpdateUser from './UpdateUser';
-
-const api = axios.create({
-    baseURL: 'http://localhost:8080',
-    withCredentials: true
-});
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -88,10 +84,16 @@ function App() {
                     <div className="d-flex align-items-center">
                         <Link to="/" className="btn btn-secondary">Больница "Здоровье"</Link>
                         <Link to="/news" className="btn btn-secondary mx-2">Новости</Link>
+
+                        <Link to="/appointment" className="btn btn-primary mx-2">
+                            Запись к врачу
+                        </Link>
+
                         {/* Кнопка личного кабинета всегда видна если авторизован */}
                         {isAuthenticated && (
                             <Link to="/dashboard" className="btn btn-primary mx-2">Личный кабинет</Link>
                         )}
+
                     </div>
 
                     <div className="center-block">
@@ -112,6 +114,12 @@ function App() {
                     <Routes>
                         <Route path="/" element={<HospitalPage />} />
                         <Route path="/news" element={<NewsPage />} />
+
+                        <Route
+                            path="/appointment"
+                            element={<DoctorAppointment isAuthenticated={isAuthenticated} />}
+                        />
+
                         <Route
                             path="/login"
                             element={<LoginPage onLoginSuccess={handleAuthSuccess} />}

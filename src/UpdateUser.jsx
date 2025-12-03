@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from './Api/Api.jsx';
 
 function UpdateUser() {
     const { id } = useParams();
@@ -35,7 +35,7 @@ function UpdateUser() {
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const response = await axios.get(`http://localhost:8080/getuser/${id}`, {
+                const response = await api.get(`/getuser/${id}`, {
                     withCredentials: true,
                     headers: {
                         "Content-Type": "application/json"
@@ -72,7 +72,7 @@ function UpdateUser() {
         formData.append('userId', id);
 
         try {
-            const response = await axios.post('http://localhost:8080/user/avatar', formData, {
+            const response = await api.post('/user/avatar', formData, {
                 withCredentials: true,
                 headers: {
                     'Content-Type': 'multipart/form-data',
@@ -96,7 +96,7 @@ function UpdateUser() {
         if (!user.avatar || isDefaultAvatar(user.avatar)) return;
 
         try {
-            await axios.delete(`http://localhost:8080/user/avatar/${id}`, {
+            await api.delete(`/user/avatar/${id}`, {
                 withCredentials: true,
             });
 
@@ -113,7 +113,7 @@ function UpdateUser() {
         setLoading(true);
 
         try {
-            await axios.put(`http://localhost:8080/update/${id}`, user, {
+            await api.put(`/update/${id}`, user, {
                 withCredentials: true,
                 headers: {
                     "Content-Type": "application/json"

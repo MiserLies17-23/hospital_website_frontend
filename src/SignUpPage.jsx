@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from './Api/Api.jsx';
 import { useNavigate } from 'react-router-dom';
 import { MDBContainer, MDBInput, MDBBtn } from 'mdb-react-ui-kit';
 
@@ -16,7 +16,7 @@ function SignUpPage() {
                 setError('Пожалуйста, заполните все поля.');
                 return;
             }
-            const response = await axios.post('http://localhost:8080/user/signup',
+            const response = await api.post('/user/signup',
                 { username, email, password },
                 {
                     withCredentials: true,
