@@ -29,11 +29,11 @@ function DoctorAppointment({ isAuthenticated }) {
             } catch (error) {
                 console.error('Ошибка при загрузке врачей:', error);
                 const mockDoctors = [
-                    { id: 1, name: 'Доктор Иванов', specialization: 'Терапевт', experience: '15 лет' },
-                    { id: 2, name: 'Доктор Петрова', specialization: 'Хирург', experience: '12 лет' },
-                    { id: 3, name: 'Доктор Сидорова', specialization: 'Стоматолог', experience: '10 лет' },
-                    { id: 4, name: 'Доктор Козлов', specialization: 'Кардиолог', experience: '18 лет' },
-                    { id: 5, name: 'Доктор Николаев', specialization: 'Невролог', experience: '14 лет' }
+                    { id: 1, name: 'Доктор Иванов', specialization: 'Терапевт', phone: '15 лет' },
+                    { id: 2, name: 'Доктор Петрова', specialization: 'Хирург', phone: '12 лет' },
+                    { id: 3, name: 'Доктор Сидорова', specialization: 'Стоматолог', phone: '10 лет' },
+                    { id: 4, name: 'Доктор Козлов', specialization: 'Кардиолог', phone: '18 лет' },
+                    { id: 5, name: 'Доктор Николаев', specialization: 'Невролог', phone: '14 лет' }
                 ];
                 setDoctors(mockDoctors);
             } finally {
@@ -64,7 +64,7 @@ function DoctorAppointment({ isAuthenticated }) {
 
         try {
             const response = await api.post(
-                '/appointments',
+                'appointment/appointments',
                 {
                     doctorId: selectedDoctor,
                     appointmentDate: appointmentDate,

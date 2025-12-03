@@ -56,7 +56,7 @@ function PatientCabinet({ onLogout }) {
 
         const fetchUserAppointments = async () => {
             try {
-                const response = await api.get('/user/appointments', {
+                const response = await api.get('/appointment/appointments', {
                     withCredentials: true,
                     headers: { "Content-Type": "application/json" }
                 });
