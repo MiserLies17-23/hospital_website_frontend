@@ -11,9 +11,14 @@ function DoctorAppointment({ isAuthenticated }) {
     const [symptoms, setSymptoms] = useState('');
     const [loading, setLoading] = useState(false);
     const [loadingDoctors, setLoadingDoctors] = useState(true);
+    const [loadingSlots, setLoadingSlots] = useState(false);
     const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
     const [showAuthModal, setShowAuthModal] = useState(false);
+
+    // Новые состояния для занятых/свободных слотов
+    const [busySlots, setBusySlots] = useState([]); // ["10:00", "14:30"]
+    const [availableSlots, setAvailableSlots] = useState([]); // ["09:00", "09:30", ...]
 
     // Загрузка списка врачей с бэкенда
     useEffect(() => {
@@ -28,14 +33,8 @@ function DoctorAppointment({ isAuthenticated }) {
                 setDoctors(response.data);
             } catch (error) {
                 console.error('Ошибка при загрузке врачей:', error);
-                const mockDoctors = [
-                    { id: 1, name: 'Доктор Иванов', specialization: 'Терапевт', phone: '15 лет' },
-                    { id: 2, name: 'Доктор Петрова', specialization: 'Хирург', phone: '12 лет' },
-                    { id: 3, name: 'Доктор Сидорова', specialization: 'Стоматолог', phone: '10 лет' },
-                    { id: 4, name: 'Доктор Козлов', specialization: 'Кардиолог', phone: '18 лет' },
-                    { id: 5, name: 'Доктор Николаев', specialization: 'Невролог', phone: '14 лет' }
-                ];
-                setDoctors(mockDoctors);
+                // Удалили mockDoctors - теперь только реальные данные
+                setError('Не удалось загрузить список врачей. Попробуйте позже.');
             } finally {
                 setLoadingDoctors(false);
             }
@@ -43,6 +42,47 @@ function DoctorAppointment({ isAuthenticated }) {
 
         fetchDoctors();
     }, []);
+
+    // Загрузка занятых слотов при выборе врача и даты
+    useEffect(() => {
+        const fetchBusySlots = async () => {
+            if (selectedDoctor && appointmentDate) {
+                setLoadingSlots(true);
+                try {
+                    const response = await api.get(`/appointments/doctor/${selectedDoctor}/busy-slots`, {
+                        params: { date: appointmentDate },
+                        withCredentials: true
+                    });
+
+                    const busy = Array.isArray(response.data) ? response.data : [];
+                    setBusySlots(busy);
+
+                    const allSlots = generateTimeSlots();
+                    const available = allSlots.filter(slot => !busy.includes(slot));
+                    setAvailableSlots(available);
+
+                    if (busy.includes(appointmentTime)) {
+                        setAppointmentTime('');
+                    }
+
+                } catch (error) {
+                    console.error('Ошибка загрузки занятых слотов:', error);
+                    // Генерируем слоты даже при ошибке
+                    const allSlots = generateTimeSlots();
+                    setAvailableSlots(allSlots);
+                    setBusySlots([]);
+                } finally {
+                    setLoadingSlots(false);
+                }
+            } else {
+                const allSlots = generateTimeSlots();
+                setAvailableSlots(allSlots);
+                setBusySlots([]);
+            }
+        };
+
+        fetchBusySlots();
+    }, [selectedDoctor, appointmentDate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -53,8 +93,19 @@ function DoctorAppointment({ isAuthenticated }) {
             return;
         }
 
-        if (!selectedDoctor || !appointmentDate || !appointmentTime) {
+        if (!selectedDoctor || selectedDoctor === '' || selectedDoctor === '0') {
+            setError('Пожалуйста, выберите врача');
+            return;
+        }
+
+        if (!appointmentDate || !appointmentTime) {
             setError('Пожалуйста, заполните все обязательные поля');
+            return;
+        }
+
+        // Дополнительная проверка: не пытается ли записаться на занятое время
+        if (busySlots.includes(appointmentTime)) {
+            setError('Выбранное время уже занято. Пожалуйста, выберите другое время.');
             return;
         }
 
@@ -63,10 +114,13 @@ function DoctorAppointment({ isAuthenticated }) {
         setSuccess('');
 
         try {
+            console.log("appointmentDate перед отправкой:", appointmentDate);
+            console.log("appointmentTime перед отправкой:", appointmentTime);
+
             const response = await api.post(
-                'appointment/appointments',
+                'appointments/add',
                 {
-                    doctorId: selectedDoctor,
+                    doctorId: Number(selectedDoctor),
                     appointmentDate: appointmentDate,
                     appointmentTime: appointmentTime,
                     symptoms: symptoms,
@@ -75,19 +129,26 @@ function DoctorAppointment({ isAuthenticated }) {
                 {
                     withCredentials: true,
                     headers: {
-                        "Content-Type": "application/json; "
+                        "Content-Type": "application/json"
                     }
                 }
             );
+
+            console.log('Отправляю JSON:', JSON.stringify(response));
+            console.log('appointmentDate:', appointmentDate, 'type:', typeof appointmentDate);
+            console.log('appointmentTime:', appointmentTime, 'type:', typeof appointmentTime);
 
             if (response.data && response.data.id) {
                 const selectedDoctorData = doctors.find(doc => doc.id === parseInt(selectedDoctor));
                 setSuccess(`Вы успешно записаны на прием к ${selectedDoctorData.name} (${selectedDoctorData.specialization}) на ${appointmentDate} в ${appointmentTime}`);
 
+                // Очищаем форму
                 setSelectedDoctor('');
                 setAppointmentDate('');
                 setAppointmentTime('');
                 setSymptoms('');
+                setBusySlots([]);
+                setAvailableSlots(generateTimeSlots());
             }
         } catch (err) {
             console.error('Ошибка при создании записи:', err);
@@ -104,16 +165,35 @@ function DoctorAppointment({ isAuthenticated }) {
     // Генерация доступных временных слотов
     const generateTimeSlots = () => {
         const slots = [];
+        const today = new Date().toISOString().split('T')[0]; // Получаем сегодняшнюю дату в формате "2025-01-15"
+
+        // Если выбранная дата - сегодня
+        const isToday = appointmentDate === today;
+
+        // Текущее время
+        const now = new Date();
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+
         for (let hour = 9; hour <= 18; hour++) {
             for (let minute = 0; minute < 60; minute += 30) {
+                // Пропускаем слоты после 18:00
+                if (hour === 18 && minute > 0) break;
+
+                // Если дата сегодня, проверяем не прошедшее ли время
+                if (isToday) {
+                    // Сравниваем час и минуту
+                    if (hour < currentHour || (hour === currentHour && minute <= currentMinute)) {
+                        continue; // Пропускаем прошедшее время
+                    }
+                }
+
                 const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
                 slots.push(time);
             }
         }
         return slots;
     };
-
-    const timeSlots = generateTimeSlots();
 
     // Минимальная дата - сегодня
     const getMinDate = () => {
@@ -126,6 +206,11 @@ function DoctorAppointment({ isAuthenticated }) {
         const maxDate = new Date();
         maxDate.setDate(maxDate.getDate() + 30);
         return maxDate.toISOString().split('T')[0];
+    };
+
+    // Вспомогательная функция для форматирования времени
+    const formatTimeDisplay = (time) => {
+        return time; // Можно добавить форматирование, например "10:00 → 10:00 AM"
     };
 
     return (
@@ -152,11 +237,15 @@ function DoctorAppointment({ isAuthenticated }) {
                                 <select
                                     className="form-select"
                                     value={selectedDoctor}
-                                    onChange={(e) => setSelectedDoctor(e.target.value)}
+                                    onChange={(e) => {
+                                        setSelectedDoctor(e.target.value);
+                                        setAppointmentTime(''); // Сбрасываем время при смене врача
+                                    }}
                                     required
                                     disabled={loadingDoctors}
                                 >
                                     <option value="">-- Выберите врача --</option>
+                                    <option value="0" disabled hidden>Не выбрано</option>
                                     {doctors.map(doctor => (
                                         <option key={doctor.id} value={doctor.id}>
                                             {doctor.name} - {doctor.specialization} ({doctor.phone})
@@ -172,7 +261,10 @@ function DoctorAppointment({ isAuthenticated }) {
                                     type="date"
                                     className="form-control"
                                     value={appointmentDate}
-                                    onChange={(e) => setAppointmentDate(e.target.value)}
+                                    onChange={(e) => {
+                                        setAppointmentDate(e.target.value);
+                                        setAppointmentTime(''); // Сбрасываем время при смене даты
+                                    }}
                                     min={getMinDate()}
                                     max={getMaxDate()}
                                     required
@@ -183,17 +275,87 @@ function DoctorAppointment({ isAuthenticated }) {
                         <div className="row">
                             <div className="col-md-6 mb-3">
                                 <label className="form-label">Время приема *</label>
-                                <select
-                                    className="form-select"
-                                    value={appointmentTime}
-                                    onChange={(e) => setAppointmentTime(e.target.value)}
-                                    required
-                                >
-                                    <option value="">-- Выберите время --</option>
-                                    {timeSlots.map(time => (
-                                        <option key={time} value={time}>{time}</option>
-                                    ))}
-                                </select>
+                                <div className="position-relative">
+                                    <select
+                                        className="form-select"
+                                        value={appointmentTime}
+                                        onChange={(e) => setAppointmentTime(e.target.value)}
+                                        required
+                                        disabled={!selectedDoctor || !appointmentDate || loadingSlots}
+                                    >
+                                        <option value="">-- Выберите время --</option>
+
+                                        {/* Свободные слоты */}
+                                        {availableSlots.length > 0 && (
+                                            <optgroup label="✅ Свободное время">
+                                                {availableSlots.map(time => (
+                                                    <option
+                                                        key={time}
+                                                        value={time}
+                                                        style={{ color: '#28a745', fontWeight: '500' }}
+                                                    >
+                                                        {formatTimeDisplay(time)} ✓
+                                                    </option>
+                                                ))}
+                                            </optgroup>
+                                        )}
+
+                                        {/* Разделитель, если есть и свободные, и занятые */}
+                                        {availableSlots.length > 0 && busySlots.length > 0 && (
+                                            <option disabled>───────────</option>
+                                        )}
+
+                                        {/* Занятые слоты */}
+                                        {busySlots.length > 0 && (
+                                            <optgroup label="❌ Занятое время">
+                                                {busySlots.map(time => (
+                                                    <option
+                                                        key={time}
+                                                        value={time}
+                                                        disabled
+                                                        style={{ color: '#6c757d', fontStyle: 'italic' }}
+                                                    >
+                                                        {formatTimeDisplay(time)} (занято)
+                                                    </option>
+                                                ))}
+                                            </optgroup>
+                                        )}
+
+                                        {/* Если нет доступных слотов */}
+                                        {availableSlots.length === 0 && busySlots.length > 0 && (
+                                            <option disabled>
+                                                Нет свободного времени на выбранную дату
+                                            </option>
+                                        )}
+                                    </select>
+
+                                    {loadingSlots && (
+                                        <div className="position-absolute top-50 end-0 translate-middle-y me-3">
+                                            <div className="spinner-border spinner-border-sm text-primary" role="status">
+                                                <span className="visually-hidden">Загрузка...</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Подсказки под селектом */}
+                                <div className="mt-2">
+                                    {!selectedDoctor && (
+                                        <small className="text-muted">Выберите врача, чтобы увидеть доступное время</small>
+                                    )}
+                                    {selectedDoctor && !appointmentDate && (
+                                        <small className="text-muted">Выберите дату, чтобы увидеть доступное время</small>
+                                    )}
+                                    {selectedDoctor && appointmentDate && loadingSlots && (
+                                        <small className="text-muted">Загружаем расписание...</small>
+                                    )}
+                                    {selectedDoctor && appointmentDate && !loadingSlots && availableSlots.length > 0 && (
+                                        <small className="text-success">Доступно {availableSlots.length} временных слотов</small>
+                                    )}
+                                    {selectedDoctor && appointmentDate && !loadingSlots && availableSlots.length === 0 && (
+                                        <small className="text-danger">На выбранную дату нет свободного времени</small>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="col-md-6 mb-3">
@@ -212,10 +374,18 @@ function DoctorAppointment({ isAuthenticated }) {
                             <button
                                 type="submit"
                                 className="btn btn-primary btn-lg"
-                                disabled={loading || loadingDoctors}
+                                disabled={loading || loadingDoctors || loadingSlots || !availableSlots.length}
                             >
                                 {loading ? 'Запись...' : 'Записаться на прием'}
                             </button>
+
+                            {(loadingSlots || !availableSlots.length) && (
+                                <div className="mt-2">
+                                    <small className="text-muted">
+                                        {loadingSlots ? 'Проверяем доступность...' : 'Нет доступного времени для записи'}
+                                    </small>
+                                </div>
+                            )}
                         </div>
                     </form>
                 </div>
@@ -229,6 +399,10 @@ function DoctorAppointment({ isAuthenticated }) {
                         <div className="spinner-border" role="status">
                             <span className="visually-hidden">Загрузка...</span>
                         </div>
+                    </div>
+                ) : doctors.length === 0 ? (
+                    <div className="text-center">
+                        <p className="text-muted">Нет доступных врачей</p>
                     </div>
                 ) : (
                     <div className="row">

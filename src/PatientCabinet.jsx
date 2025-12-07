@@ -56,7 +56,7 @@ function PatientCabinet({ onLogout }) {
 
         const fetchUserAppointments = async () => {
             try {
-                const response = await api.get('/appointment/appointments', {
+                const response = await api.get('/appointments/user', {
                     withCredentials: true,
                     headers: { "Content-Type": "application/json" }
                 });
@@ -95,7 +95,7 @@ function PatientCabinet({ onLogout }) {
         formData.append('file', file);
 
         try {
-            const response = await api.post('/user/avatar', formData, {
+            await api.post('/user/avatar', formData, {
                 withCredentials: true,
                 headers: {
                     'Content-Type': 'multipart/form-data',
@@ -149,7 +149,7 @@ function PatientCabinet({ onLogout }) {
         if (!window.confirm('Вы уверены, что хотите отменить запись?')) return;
 
         try {
-            await api.delete(`/user/appointments/${appointmentId}`, {
+            await api.delete(`/appointments/${appointmentId}`, {
                 withCredentials: true,
                 headers: { "Content-Type": "application/json" }
             });
@@ -180,7 +180,7 @@ function PatientCabinet({ onLogout }) {
                     <p className="text-danger text-center">{error}</p>
                 ) : (
                     <>
-                        {/* Блок аватара (старый дизайн) */}
+                        {/* Блок аватара */}
                         <div className="text-center mb-4">
                             <div className="avatar-container position-relative d-inline-block">
                                 {avatar ? (
@@ -254,7 +254,7 @@ function PatientCabinet({ onLogout }) {
                             </div>
                         </div>
 
-                        {/* Информация о пользователе (старый дизайн) */}
+                        {/* Информация о пользователе */}
                         <div className="text-center mb-4">
                             <p><strong>ID:</strong> {id}</p>
                             <p><strong>Имя пользователя:</strong> {username}</p>
@@ -312,15 +312,15 @@ function PatientCabinet({ onLogout }) {
                                         {appointments.map(appointment => (
                                             <tr key={appointment.id}>
                                                 <td>{appointment.doctorName}</td>
-                                                <td>{appointment.doctorSpecialization}</td>
-                                                <td>{formatDate(appointment.appointmentDate)}</td>
+                                                <td>{appointment.specialization}</td>
+                                                <td>{appointment.appointmentDate}</td>
                                                 <td>{appointment.appointmentTime}</td>
                                                 <td>
-                                                        <span className={`badge bg-${appointment.status === 'SCHEDULED' ? 'primary' :
-                                                            appointment.status === 'COMPLETED' ? 'success' : 'secondary'}`}>
-                                                            {appointment.status === 'SCHEDULED' ? 'Запланировано' :
-                                                                appointment.status === 'COMPLETED' ? 'Завершено' : 'Отменено'}
-                                                        </span>
+                                                    <span className={`badge bg-${appointment.status === 'SCHEDULED' ? 'primary' :
+                                                        appointment.status === 'COMPLETED' ? 'success' : 'secondary'}`}>
+                                                        {appointment.status === 'SCHEDULED' ? 'Запланировано' :
+                                                            appointment.status === 'COMPLETED' ? 'Завершено' : 'Отменено'}
+                                                    </span>
                                                 </td>
                                                 <td>
                                                     {appointment.status === 'SCHEDULED' && (
