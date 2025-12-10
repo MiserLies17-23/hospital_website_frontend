@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from './Api/Api.jsx';
+import { getErrorMessage } from "./utils/errorHandler";
 import './index.css';
 import { Link } from 'react-router-dom';
 
@@ -17,33 +18,27 @@ function DoctorAppointment({ isAuthenticated }) {
     const [showAuthModal, setShowAuthModal] = useState(false);
 
     // Новые состояния для занятых/свободных слотов
-    const [busySlots, setBusySlots] = useState([]); // ["10:00", "14:30"]
-    const [availableSlots, setAvailableSlots] = useState([]); // ["09:00", "09:30", ...]
+    const [busySlots, setBusySlots] = useState([]);
+    const [availableSlots, setAvailableSlots] = useState([]);
 
     // Загрузка списка врачей с бэкенда
     useEffect(() => {
         const fetchDoctors = async () => {
             try {
-                const response = await api.get('/doctor/doctors', {
-                    withCredentials: true,
-                    headers: {
-                        "Content-Type": "application/json"
-                    }
-                });
+                const response = await api.get('/doctor/doctors');
+                console.log('Врачи загружены:', response.data); // Лог успеха
                 setDoctors(response.data);
             } catch (error) {
-                console.error('Ошибка при загрузке врачей:', error);
-                // Удалили mockDoctors - теперь только реальные данные
-                setError('Не удалось загрузить список врачей. Попробуйте позже.');
+                console.error('Ошибка загрузки врачей (детально):', error); // Детальный лог ошибки
+                setError(getErrorMessage(error));
+                setDoctors([]);
             } finally {
                 setLoadingDoctors(false);
             }
         };
-
         fetchDoctors();
     }, []);
 
-    // Загрузка занятых слотов при выборе врача и даты
     useEffect(() => {
         const fetchBusySlots = async () => {
             if (selectedDoctor && appointmentDate) {
@@ -56,18 +51,16 @@ function DoctorAppointment({ isAuthenticated }) {
 
                     const busy = Array.isArray(response.data) ? response.data : [];
                     setBusySlots(busy);
-
                     const allSlots = generateTimeSlots();
                     const available = allSlots.filter(slot => !busy.includes(slot));
                     setAvailableSlots(available);
-
                     if (busy.includes(appointmentTime)) {
                         setAppointmentTime('');
                     }
-
                 } catch (error) {
-                    console.error('Ошибка загрузки занятых слотов:', error);
-                    // Генерируем слоты даже при ошибке
+                    // Локально обрабатываем ошибку, не затрагивая doctors
+                    console.error('Ошибка загрузки занятых слотов:', getErrorMessage(error));
+                    // Если не удалось загрузить занятые слоты, показываем все как доступные
                     const allSlots = generateTimeSlots();
                     setAvailableSlots(allSlots);
                     setBusySlots([]);
@@ -80,14 +73,12 @@ function DoctorAppointment({ isAuthenticated }) {
                 setBusySlots([]);
             }
         };
-
         fetchBusySlots();
     }, [selectedDoctor, appointmentDate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Проверка авторизации
         if (!isAuthenticated) {
             setShowAuthModal(true);
             return;
@@ -103,7 +94,6 @@ function DoctorAppointment({ isAuthenticated }) {
             return;
         }
 
-        // Дополнительная проверка: не пытается ли записаться на занятое время
         if (busySlots.includes(appointmentTime)) {
             setError('Выбранное время уже занято. Пожалуйста, выберите другое время.');
             return;
@@ -114,9 +104,6 @@ function DoctorAppointment({ isAuthenticated }) {
         setSuccess('');
 
         try {
-            console.log("appointmentDate перед отправкой:", appointmentDate);
-            console.log("appointmentTime перед отправкой:", appointmentTime);
-
             const response = await api.post(
                 'appointments/add',
                 {
@@ -134,10 +121,6 @@ function DoctorAppointment({ isAuthenticated }) {
                 }
             );
 
-            console.log('Отправляю JSON:', JSON.stringify(response));
-            console.log('appointmentDate:', appointmentDate, 'type:', typeof appointmentDate);
-            console.log('appointmentTime:', appointmentTime, 'type:', typeof appointmentTime);
-
             if (response.data && response.data.id) {
                 const selectedDoctorData = doctors.find(doc => doc.id === parseInt(selectedDoctor));
                 setSuccess(`Вы успешно записаны на прием к ${selectedDoctorData.name} (${selectedDoctorData.specialization}) на ${appointmentDate} в ${appointmentTime}`);
@@ -150,10 +133,41 @@ function DoctorAppointment({ isAuthenticated }) {
                 setBusySlots([]);
                 setAvailableSlots(generateTimeSlots());
             }
-        } catch (err) {
-            console.error('Ошибка при создании записи:', err);
-            if (err.response?.data?.message) {
-                setError(err.response.data.message);
+        } catch (error) {
+            const status = error.response?.status;
+            const errorData = error.response?.data;
+
+            console.error('Ошибка при создании записи:', errorData || error.message);
+
+            if (status === 409) {
+                setError('Выбранное время уже занято. Пожалуйста, выберите другое время.');
+
+                if (selectedDoctor && appointmentDate) {
+                    try {
+                        const response = await api.get(`/appointments/doctor/${selectedDoctor}/busy-slots`, {
+                            params: { date: appointmentDate },
+                            withCredentials: true
+                        });
+                        setBusySlots(response.data || []);
+
+                        const allSlots = generateTimeSlots();
+                        const available = allSlots.filter(slot => !response.data?.includes(slot));
+                        setAvailableSlots(available);
+
+                        if (response.data?.includes(appointmentTime)) {
+                            setAppointmentTime('');
+                        }
+                    } catch (refreshError) {
+                        console.error('Ошибка обновления слотов:', refreshError);
+                    }
+                }
+            } else if (status === 404) {
+                setError('Врач не найден. Пожалуйста, выберите другого врача.');
+            } else if (errorData?.message) {
+                const errorMessage = typeof errorData.message === 'string'
+                    ? errorData.message
+                    : 'Неизвестная ошибка';
+                setError(errorMessage);
             } else {
                 setError('Произошла ошибка при записи на прием');
             }
@@ -285,45 +299,37 @@ function DoctorAppointment({ isAuthenticated }) {
                                     >
                                         <option value="">-- Выберите время --</option>
 
-                                        {/* Свободные слоты */}
-                                        {availableSlots.length > 0 && (
-                                            <optgroup label="✅ Свободное время">
-                                                {availableSlots.map(time => (
-                                                    <option
-                                                        key={time}
-                                                        value={time}
-                                                        style={{ color: '#28a745', fontWeight: '500' }}
-                                                    >
-                                                        {formatTimeDisplay(time)} ✓
-                                                    </option>
-                                                ))}
-                                            </optgroup>
-                                        )}
+                                        {/* Свободные слоты с уникальными ключами */}
+                                        {availableSlots.map((time, index) => (
+                                            <option
+                                                key={`available-${index}-${time}`}
+                                                value={time}
+                                                style={{ color: '#28a745', fontWeight: '500' }}
+                                            >
+                                                {formatTimeDisplay(time)} ✓
+                                            </option>
+                                        ))}
 
-                                        {/* Разделитель, если есть и свободные, и занятые */}
+                                        {/* Разделитель */}
                                         {availableSlots.length > 0 && busySlots.length > 0 && (
-                                            <option disabled>───────────</option>
+                                            <option key="separator" disabled>───────────</option>
                                         )}
 
-                                        {/* Занятые слоты */}
-                                        {busySlots.length > 0 && (
-                                            <optgroup label="❌ Занятое время">
-                                                {busySlots.map(time => (
-                                                    <option
-                                                        key={time}
-                                                        value={time}
-                                                        disabled
-                                                        style={{ color: '#6c757d', fontStyle: 'italic' }}
-                                                    >
-                                                        {formatTimeDisplay(time)} (занято)
-                                                    </option>
-                                                ))}
-                                            </optgroup>
-                                        )}
+                                        {/* Занятые слоты с уникальными ключами */}
+                                        {busySlots.map((time, index) => (
+                                            <option
+                                                key={`busy-${index}-${time}`}
+                                                value={time}
+                                                disabled
+                                                style={{ color: '#6c757d', fontStyle: 'italic' }}
+                                            >
+                                                {formatTimeDisplay(time)} (занято)
+                                            </option>
+                                        ))}
 
-                                        {/* Если нет доступных слотов */}
+                                        {/* Сообщение если нет свободных слотов */}
                                         {availableSlots.length === 0 && busySlots.length > 0 && (
-                                            <option disabled>
+                                            <option key="no-slots" disabled>
                                                 Нет свободного времени на выбранную дату
                                             </option>
                                         )}

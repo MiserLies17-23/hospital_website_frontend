@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from './Api/Api.jsx';
+import { getErrorMessage } from "./utils/errorHandler";
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -21,25 +22,18 @@ function LoginPage({ onLoginSuccess }) {
             }
 
             setLoading(true);
-            const response = await api.post('/user/login', { username, password },
+            await api.post('/user/login', { username, password },
                 {
                     withCredentials: true,
-                    headers: {
-                        "Content-Type": "application/json"
-                    }
+                    headers: { "Content-Type": "application/json" }
                 }
             );
-            console.log('Login successful:', response.data);
 
-            // Вызываем колбэк при успешном входе
-            if (onLoginSuccess) {
-                await onLoginSuccess();
-            }
-
+            if (onLoginSuccess) await onLoginSuccess();
             navigate('/dashboard');
+
         } catch (error) {
-            console.error('Login failed:', error.response ? error.response.data : error.message);
-            setError(error.response?.data || 'Ошибка при входе');
+            setError(getErrorMessage(error));
         } finally {
             setLoading(false);
         }

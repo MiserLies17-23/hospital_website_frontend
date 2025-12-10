@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import api from './Api/Api.jsx';
+import { getErrorMessage } from "./utils/errorHandler";
 import { useNavigate } from 'react-router-dom';
 import { MDBContainer, MDBInput, MDBBtn } from 'mdb-react-ui-kit';
 
@@ -16,31 +17,21 @@ function SignUpPage() {
                 setError('Пожалуйста, заполните все поля.');
                 return;
             }
-            const response = await api.post('/user/signup',
+
+            await api.post('/user/signup',
                 { username, email, password },
                 {
                     withCredentials: true,
-                    headers: {
-                        "Content-Type": "application/json"
-                    }
+                    headers: { "Content-Type": "application/json" }
                 }
             );
-            console.log('Sign up successful:', response.data);
-            navigate('/login', { state: { message: 'Регистрация прошла успешно! Теперь вы можете войти.' } });
+
+            navigate('/login', {
+                state: { message: 'Регистрация прошла успешно!' }
+            });
+
         } catch (error) {
-            console.error('Sign up failed:', error.response ? error.response.data : error.message);
-            if (error.response) {
-                const errorData = error.response.data;
-                if (typeof errorData === 'string') {
-                    setError(errorData);
-                } else if (errorData.error) {
-                    setError(errorData.error);
-                } else {
-                    setError('Ошибка при регистрации');
-                }
-            } else {
-                setError('Ошибка сети');
-            }
+            setError(getErrorMessage(error));
         }
     };
 

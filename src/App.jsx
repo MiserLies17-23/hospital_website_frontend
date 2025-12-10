@@ -12,6 +12,7 @@ import AuthButtons from './AuthButtons';
 import VisitorCount from './VisitorCount';
 import AdminPanel from './AdminPanel';
 import UpdateUser from './UpdateUser';
+import {getErrorMessage} from "./utils/errorHandler";
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -22,24 +23,19 @@ function App() {
     const checkAuth = async () => {
         try {
             const response = await api.get("/user/checklogin");
+            const userData = response.data;
 
-            if (response.data.authenticated) {
+            if (userData) {
                 setIsAuthenticated(true);
-                setUserRole(response.data.role || 'USER');
+                setUserRole(userData.role || 'USER');
             } else {
                 setIsAuthenticated(false);
                 setUserRole('VISITOR');
             }
         } catch (error) {
-            if (error.response?.status === 401) {
-                console.log("User not authenticated (401)");
-                setIsAuthenticated(false);
-                setUserRole('');
-            } else {
-                console.error("Other error:", error);
-                setIsAuthenticated(false);
-                setUserRole('');
-            }
+            console.error("Auth check error:", getErrorMessage(error));
+            setIsAuthenticated(false);
+            setUserRole('VISITOR');
         } finally {
             setLoading(false);
         }
@@ -65,7 +61,7 @@ function App() {
                 setUserRole('');
                 navigate('/');
             } catch (error) {
-                console.error("Ошибка при выходе:", error);
+                console.error("Ошибка при выходе:", getErrorMessage(error));
             }
         };
 

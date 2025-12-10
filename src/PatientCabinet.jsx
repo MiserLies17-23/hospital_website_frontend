@@ -1,4 +1,5 @@
 import api from './Api/Api.jsx';
+import { getErrorMessage } from "./utils/errorHandler";
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -13,6 +14,7 @@ function PatientCabinet({ onLogout }) {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
+    const [activeTab, setActiveTab] = useState('scheduled'); // scheduled, completed, cancelled
     const navigate = useNavigate();
 
     // Функция для проверки, является ли аватар дефолтным
@@ -49,8 +51,13 @@ function PatientCabinet({ onLogout }) {
                 setId(response.data.id);
                 setAvatar(response.data.avatar);
             } catch (error) {
-                setError('Не удалось загрузить информацию о пользователе');
-                console.error(error);
+                const errorMessage = getErrorMessage(error);
+                setError(errorMessage);
+
+                // Редирект только для 404/401
+                if (error.response?.status === 404 || error.response?.status === 401) {
+                    navigate('/login');
+                }
             }
         };
 
@@ -58,11 +65,12 @@ function PatientCabinet({ onLogout }) {
             try {
                 const response = await api.get('/appointments/user', {
                     withCredentials: true,
-                    headers: { "Content-Type": "application/json" }
+                    headers: {"Content-Type": "application/json"}
                 });
                 setAppointments(response.data);
             } catch (error) {
-                console.error('Ошибка при загрузке записей:', error);
+                console.error('Ошибка при загрузке записей:', getErrorMessage(error));
+                setAppointments([]);
             } finally {
                 setLoadingAppointments(false);
             }
@@ -71,6 +79,34 @@ function PatientCabinet({ onLogout }) {
         fetchUserInfo();
         fetchUserAppointments();
     }, []);
+
+    // Фильтрация записей по статусу
+    const getFilteredAppointments = () => {
+        switch (activeTab) {
+            case 'scheduled':
+                return appointments.filter(app => app.status === 'SCHEDULED');
+            case 'completed':
+                return appointments.filter(app => app.status === 'COMPLETED');
+            case 'cancelled':
+                return appointments.filter(app => app.status === 'CANCELLED');
+            default:
+                return appointments;
+        }
+    };
+
+    // Получение статистики по записям
+    const getAppointmentStats = () => {
+        const scheduled = appointments.filter(app => app.status === 'SCHEDULED').length;
+        const completed = appointments.filter(app => app.status === 'COMPLETED').length;
+        const cancelled = appointments.filter(app => app.status === 'CANCELLED').length;
+
+        return {
+            scheduled,
+            completed,
+            cancelled,
+            total: appointments.length
+        };
+    };
 
     // Функция для загрузки аватара
     const handleAvatarUpload = async (event) => {
@@ -151,30 +187,75 @@ function PatientCabinet({ onLogout }) {
         try {
             await api.delete(`/appointments/${appointmentId}`, {
                 withCredentials: true,
-                headers: { "Content-Type": "application/json" }
+                headers: {"Content-Type": "application/json"}
             });
 
-            const updatedAppointments = appointments.filter(app => app.id !== appointmentId);
-            setAppointments(updatedAppointments);
+            // Обновляем статус записи на клиенте
+            setAppointments(prev => prev.map(app =>
+                app.id === appointmentId
+                    ? {...app, status: 'CANCELLED'}
+                    : app
+            ));
+
             alert('Запись успешно отменена!');
         } catch (error) {
-            console.error('Ошибка при отмене записи:', error);
-            setError('Не удалось отменить запись');
+            alert(getErrorMessage(error));
         }
     };
 
-    // Форматирование даты
-    const formatDate = (dateString) => {
-        const options = { day: 'numeric', month: 'long', year: 'numeric' };
-        return new Date(dateString).toLocaleDateString('ru-RU', options);
+    // Функция для повторной записи (на основе отмененной записи)
+    const handleReBookAppointment = (appointment) => {
+        navigate('/appointment', {
+            state: {
+                doctorId: appointment.doctorId,
+                symptoms: appointment.symptoms
+            }
+        });
+    };
+
+    // Функция для просмотра деталей завершенной записи
+    const handleViewAppointmentDetails = (appointment) => {
+        // Здесь можно реализовать модальное окно или отдельную страницу
+        alert(`Детали записи:\nВрач: ${appointment.doctorName}\nДата: ${appointment.appointmentDate}\nСимптомы: ${appointment.symptoms || 'Не указаны'}`);
+    };
+
+    // Получение класса для бейджа статуса
+    const getStatusBadgeClass = (status) => {
+        switch (status) {
+            case 'SCHEDULED':
+                return 'bg-primary';
+            case 'COMPLETED':
+                return 'bg-success';
+            case 'CANCELLED':
+                return 'bg-secondary';
+            default:
+                return 'bg-light text-dark';
+        }
+    };
+
+    // Получение текста статуса
+    const getStatusText = (status) => {
+        switch (status) {
+            case 'SCHEDULED':
+                return 'Запланировано';
+            case 'COMPLETED':
+                return 'Завершено';
+            case 'CANCELLED':
+                return 'Отменено';
+            default:
+                return status;
+        }
     };
 
     const handleAdminPanelClick = () => navigate('/admin-panel');
     const handleNewAppointmentClick = () => navigate('/appointment');
 
+    const stats = getAppointmentStats();
+    const filteredAppointments = getFilteredAppointments();
+
     return (
         <div className="d-flex justify-content-center align-items-center vh-100">
-            <div className="border rounded-lg p-4" style={{ width: '800px', height: 'auto', minHeight: '600px' }}>
+            <div className="border rounded-lg p-4" style={{width: '1200px', height: 'auto', minHeight: '600px'}}>
                 <h2 className="text-center">Кабинет пациента</h2>
                 {error ? (
                     <p className="text-danger text-center">{error}</p>
@@ -232,7 +313,7 @@ function PatientCabinet({ onLogout }) {
                                     id="avatar-upload"
                                     accept="image/*"
                                     onChange={handleAvatarUpload}
-                                    style={{ display: 'none' }}
+                                    style={{display: 'none'}}
                                     disabled={loading}
                                 />
                                 <label
@@ -262,6 +343,24 @@ function PatientCabinet({ onLogout }) {
                             <p><strong>Роль:</strong> {role}</p>
                         </div>
 
+                        {/* Статистика записей */}
+                        <div className="text-center mb-4">
+                            <div className="d-flex justify-content-center gap-3">
+                            <span className="badge bg-primary p-2">
+                                Запланировано: {stats.scheduled}
+                            </span>
+                                <span className="badge bg-success p-2">
+                                Завершено: {stats.completed}
+                            </span>
+                                <span className="badge bg-secondary p-2">
+                                Отменено: {stats.cancelled}
+                            </span>
+                                <span className="badge bg-light text-dark p-2">
+                                Всего: {stats.total}
+                            </span>
+                            </div>
+                        </div>
+
                         {/* Кнопка для новой записи */}
                         <div className="text-center mb-4">
                             <button
@@ -277,6 +376,42 @@ function PatientCabinet({ onLogout }) {
                         <div className="mt-4 p-3 border rounded">
                             <h4 className="text-center mb-3">Мои записи</h4>
 
+                            {/* Вкладки */}
+                            <nav className="mb-4">
+                                <div className="nav nav-tabs justify-content-center" id="appointments-tab"
+                                     role="tablist">
+                                    <button
+                                        className={`nav-link ${activeTab === 'scheduled' ? 'active' : ''}`}
+                                        onClick={() => setActiveTab('scheduled')}
+                                    >
+                                        Запланированные
+                                        {stats.scheduled > 0 && (
+                                            <span className="badge bg-primary ms-2">{stats.scheduled}</span>
+                                        )}
+                                    </button>
+
+                                    <button
+                                        className={`nav-link ${activeTab === 'completed' ? 'active' : ''}`}
+                                        onClick={() => setActiveTab('completed')}
+                                    >
+                                        Завершенные
+                                        {stats.completed > 0 && (
+                                            <span className="badge bg-success ms-2">{stats.completed}</span>
+                                        )}
+                                    </button>
+
+                                    <button
+                                        className={`nav-link ${activeTab === 'cancelled' ? 'active' : ''}`}
+                                        onClick={() => setActiveTab('cancelled')}
+                                    >
+                                        Отмененные
+                                        {stats.cancelled > 0 && (
+                                            <span className="badge bg-secondary ms-2">{stats.cancelled}</span>
+                                        )}
+                                    </button>
+                                </div>
+                            </nav>
+
                             {loadingAppointments ? (
                                 <div className="text-center py-4">
                                     <div className="spinner-border spinner-border-sm text-primary" role="status">
@@ -284,16 +419,26 @@ function PatientCabinet({ onLogout }) {
                                     </div>
                                     <p className="mt-2">Загрузка записей...</p>
                                 </div>
-                            ) : appointments.length === 0 ? (
+                            ) : filteredAppointments.length === 0 ? (
                                 <div className="text-center py-3">
-                                    <i className="bi bi-calendar-x text-muted" style={{ fontSize: '3rem' }}></i>
-                                    <p className="mt-2 text-muted">У вас нет активных записей</p>
-                                    <button
-                                        className="btn btn-sm btn-outline-primary mt-2"
-                                        onClick={handleNewAppointmentClick}
-                                    >
-                                        Записаться на прием
-                                    </button>
+                                    <i className={`bi ${
+                                        activeTab === 'scheduled' ? 'bi-calendar-x' :
+                                            activeTab === 'completed' ? 'bi-calendar-check' :
+                                                'bi-calendar-x'
+                                    } text-muted`} style={{fontSize: '3rem'}}></i>
+                                    <p className="mt-2 text-muted">
+                                        {activeTab === 'scheduled' && 'Нет запланированных записей'}
+                                        {activeTab === 'completed' && 'Нет завершенных записей'}
+                                        {activeTab === 'cancelled' && 'Нет отмененных записей'}
+                                    </p>
+                                    {activeTab === 'scheduled' && (
+                                        <button
+                                            className="btn btn-sm btn-outline-primary mt-2"
+                                            onClick={handleNewAppointmentClick}
+                                        >
+                                            Записаться на прием
+                                        </button>
+                                    )}
                                 </div>
                             ) : (
                                 <div className="table-responsive">
@@ -305,32 +450,60 @@ function PatientCabinet({ onLogout }) {
                                             <th>Дата</th>
                                             <th>Время</th>
                                             <th>Статус</th>
+                                            <th>Симптомы</th>
                                             <th>Действия</th>
                                         </tr>
                                         </thead>
                                         <tbody>
-                                        {appointments.map(appointment => (
+                                        {filteredAppointments.map(appointment => (
                                             <tr key={appointment.id}>
                                                 <td>{appointment.doctorName}</td>
                                                 <td>{appointment.specialization}</td>
                                                 <td>{appointment.appointmentDate}</td>
                                                 <td>{appointment.appointmentTime}</td>
                                                 <td>
-                                                    <span className={`badge bg-${appointment.status === 'SCHEDULED' ? 'primary' :
-                                                        appointment.status === 'COMPLETED' ? 'success' : 'secondary'}`}>
-                                                        {appointment.status === 'SCHEDULED' ? 'Запланировано' :
-                                                            appointment.status === 'COMPLETED' ? 'Завершено' : 'Отменено'}
+                                                    <span
+                                                        className={`badge ${getStatusBadgeClass(appointment.status)}`}>
+                                                        {getStatusText(appointment.status)}
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    {appointment.status === 'SCHEDULED' && (
+                                                    <small>{appointment.symptoms || 'Не указаны'}</small>
+                                                </td>
+                                                <td>
+                                                    <div className="d-flex gap-1">
+                                                        {appointment.status === 'SCHEDULED' && (
+                                                            <button
+                                                                className="btn btn-sm btn-outline-danger"
+                                                                onClick={() => handleCancelAppointment(appointment.id)}
+                                                            >
+                                                                Отменить
+                                                            </button>
+                                                        )}
+                                                        {appointment.status === 'COMPLETED' && (
+                                                            <button
+                                                                className="btn btn-sm btn-outline-primary"
+                                                                onClick={() => handleViewAppointmentDetails(appointment)}
+                                                            >
+                                                                Детали
+                                                            </button>
+                                                        )}
+                                                        {appointment.status === 'CANCELLED' && (
+                                                            <button
+                                                                className="btn btn-sm btn-outline-success"
+                                                                onClick={() => handleReBookAppointment(appointment)}
+                                                            >
+                                                                Записаться
+                                                            </button>
+                                                        )}
                                                         <button
-                                                            className="btn btn-sm btn-outline-danger"
-                                                            onClick={() => handleCancelAppointment(appointment.id)}
+                                                            className="btn btn-sm btn-outline-secondary"
+                                                            onClick={() => handleViewAppointmentDetails(appointment)}
+                                                            title="Подробнее"
                                                         >
-                                                            Отменить
+                                                            <i className="bi bi-info-circle"></i>
                                                         </button>
-                                                    )}
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}
@@ -339,22 +512,22 @@ function PatientCabinet({ onLogout }) {
                                 </div>
                             )}
                         </div>
+
+                        <div className="text-center mt-4">
+                            {role === "ADMIN" && (
+                                <button type="button" className="btn btn-primary" onClick={handleAdminPanelClick}>
+                                    Панель администратора
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="text-center">
+                            <button type="button" className="btn btn-danger mt-3" onClick={onLogout}>
+                                Выйти
+                            </button>
+                        </div>
                     </>
                 )}
-
-                <div className="text-center mt-4">
-                    {role === "ADMIN" && (
-                        <button type="button" className="btn btn-primary" onClick={handleAdminPanelClick}>
-                            Панель администратора
-                        </button>
-                    )}
-                </div>
-
-                <div className="text-center">
-                    <button type="button" className="btn btn-danger mt-3" onClick={onLogout}>
-                        Выйти
-                    </button>
-                </div>
             </div>
         </div>
     );
