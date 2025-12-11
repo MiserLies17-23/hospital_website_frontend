@@ -16,6 +16,13 @@ function PatientCabinet({ onLogout }) {
     const [uploadProgress, setUploadProgress] = useState(0);
     const [activeTab, setActiveTab] = useState('scheduled'); // scheduled, completed, cancelled
     const navigate = useNavigate();
+    const [isEditing, setIsEditing] = useState(false);
+    const [editForm, setEditForm] = useState({
+        username: '',
+        email: '',
+    });
+    const [editError, setEditError] = useState('');
+    const [editLoading, setEditLoading] = useState(false);
 
     // Функция для проверки, является ли аватар дефолтным
     const isDefaultAvatar = (avatarUrl) => {
@@ -50,6 +57,11 @@ function PatientCabinet({ onLogout }) {
                 setRole(response.data.role);
                 setId(response.data.id);
                 setAvatar(response.data.avatar);
+
+                setEditForm({
+                    username: response.data.username,
+                    email: response.data.email,
+                });
             } catch (error) {
                 const errorMessage = getErrorMessage(error);
                 setError(errorMessage);
@@ -143,13 +155,23 @@ function PatientCabinet({ onLogout }) {
                     setUploadProgress(percentCompleted);
                 },
             });
+
             setUploadProgress(0);
             alert('Аватар успешно обновлен!');
 
-            const userResponse = await api.get('/user/dashboard', {
-                withCredentials: true
-            });
-            setAvatar(userResponse.data.avatar);
+            try {
+                const userResponse = await api.get('/user/dashboard', {
+                    withCredentials: true
+                });
+                setAvatar(userResponse.data.avatar);
+            } catch (dashboardError) {
+                console.log('Не удалось обновить данные');
+                if (avatar) {
+                    const newAvatarUrl = `${avatar}?t=${Date.now()}`;
+                    setAvatar(newAvatarUrl);
+                }
+            }
+
         } catch (error) {
             console.error('Ошибка при загрузке аватара:', error);
             setError('Не удалось загрузить аватар. Попробуйте еще раз.');
@@ -185,7 +207,7 @@ function PatientCabinet({ onLogout }) {
         if (!window.confirm('Вы уверены, что хотите отменить запись?')) return;
 
         try {
-            await api.delete(`/appointments/${appointmentId}`, {
+            await api.post(`/appointments/${appointmentId}/cancel`, {
                 withCredentials: true,
                 headers: {"Content-Type": "application/json"}
             });
@@ -203,6 +225,23 @@ function PatientCabinet({ onLogout }) {
         }
     };
 
+    const handleDeleteAppointment = async (appointmentId) => {
+        if (!window.confirm('Вы уверены, что хотите удалить запись? Это действие необратимо.')) return;
+
+        try {
+            await api.delete(`/appointments/${appointmentId}/delete`, {
+                withCredentials: true,
+                headers: { "Content-Type": "application/json" }
+            });
+
+            // Удаляем запись из списка
+            setAppointments(prev => prev.filter(app => app.id !== appointmentId));
+            alert('Запись успешно удалена!');
+        } catch (error) {
+            alert(getErrorMessage(error));
+        }
+    };
+
     // Функция для повторной записи (на основе отмененной записи)
     const handleReBookAppointment = (appointment) => {
         navigate('/appointment', {
@@ -213,9 +252,40 @@ function PatientCabinet({ onLogout }) {
         });
     };
 
+    const handleEditUser = async () => {
+        if (!editForm.username.trim() || !editForm.email.trim()) {
+            setEditError('Имя и email обязательны для заполнения');
+            return;
+        }
+
+        setEditLoading(true);
+        setEditError('');
+
+        try {
+           await api.post('/user/edit', {
+                id: id,
+                username: editForm.username,
+                email: editForm.email,
+            }, {
+                withCredentials: true,
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
+
+            setUsername(editForm.username);
+            setEmail(editForm.email);
+            setIsEditing(false);
+            alert('Данные успешно обновлены!');
+        } catch (error) {
+            setEditError(getErrorMessage(error));
+        } finally {
+            setEditLoading(false);
+        }
+    };
+
     // Функция для просмотра деталей завершенной записи
     const handleViewAppointmentDetails = (appointment) => {
-        // Здесь можно реализовать модальное окно или отдельную страницу
         alert(`Детали записи:\nВрач: ${appointment.doctorName}\nДата: ${appointment.appointmentDate}\nСимптомы: ${appointment.symptoms || 'Не указаны'}`);
     };
 
@@ -308,22 +378,27 @@ function PatientCabinet({ onLogout }) {
                             </div>
 
                             <div className="mt-3">
-                                <input
-                                    type="file"
-                                    id="avatar-upload"
-                                    accept="image/*"
-                                    onChange={handleAvatarUpload}
-                                    style={{display: 'none'}}
-                                    disabled={loading}
-                                />
-                                <label
-                                    htmlFor="avatar-upload"
-                                    className={`btn btn-primary btn-sm ${loading ? 'disabled' : ''}`}
-                                >
-                                    {avatar ? 'Изменить аватар' : 'Загрузить аватар'}
-                                </label>
+                                {/* Кнопка изменения аватара показывается только в режиме редактирования */}
+                                {isEditing && (
+                                    <>
+                                        <input
+                                            type="file"
+                                            id="avatar-upload"
+                                            accept="image/*"
+                                            onChange={handleAvatarUpload}
+                                            style={{display: 'none'}}
+                                            disabled={loading}
+                                        />
+                                        <label
+                                            htmlFor="avatar-upload"
+                                            className={`btn btn-primary btn-sm ${loading ? 'disabled' : ''}`}
+                                        >
+                                            {avatar ? 'Изменить аватар' : 'Загрузить аватар'}
+                                        </label>
+                                    </>
+                                )}
 
-                                {avatar && !isDefaultAvatar(avatar) && (
+                                {avatar && !isDefaultAvatar(avatar) && isEditing && (
                                     <button
                                         className="btn btn-outline-danger btn-sm ms-2"
                                         onClick={handleRemoveAvatar}
@@ -338,26 +413,54 @@ function PatientCabinet({ onLogout }) {
                         {/* Информация о пользователе */}
                         <div className="text-center mb-4">
                             <p><strong>ID:</strong> {id}</p>
-                            <p><strong>Имя пользователя:</strong> {username}</p>
-                            <p><strong>Электронная почта:</strong> {email}</p>
+
+                            {isEditing ? (
+                                <div className="mb-3">
+                                    <div className="mb-2">
+                                        <label className="form-label"><strong>Имя пользователя:</strong></label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            value={editForm.username}
+                                            onChange={(e) => setEditForm({...editForm, username: e.target.value})}
+                                        />
+                                    </div>
+                                    <div className="mb-2">
+                                        <label className="form-label"><strong>Электронная почта:</strong></label>
+                                        <input
+                                            type="email"
+                                            className="form-control"
+                                            value={editForm.email}
+                                            onChange={(e) => setEditForm({...editForm, email: e.target.value})}
+                                        />
+                                    </div>
+                                    {editError && <div className="text-danger small">{editError}</div>}
+                                </div>
+                            ) : (
+                                <>
+                                    <p><strong>Имя пользователя:</strong> {username}</p>
+                                    <p><strong>Электронная почта:</strong> {email}</p>
+                                </>
+                            )}
+
                             <p><strong>Роль:</strong> {role}</p>
                         </div>
 
                         {/* Статистика записей */}
                         <div className="text-center mb-4">
-                            <div className="d-flex justify-content-center gap-3">
-                            <span className="badge bg-primary p-2">
-                                Запланировано: {stats.scheduled}
-                            </span>
+                            <div className="d-flex justify-content-center flex-wrap" style={{ gap: '10px' }}>
+                                <span className="badge bg-primary p-2">
+                                    Запланировано: {stats.scheduled}
+                                </span>
                                 <span className="badge bg-success p-2">
-                                Завершено: {stats.completed}
-                            </span>
+                                    Завершено: {stats.completed}
+                                </span>
                                 <span className="badge bg-secondary p-2">
-                                Отменено: {stats.cancelled}
-                            </span>
+                                    Отменено: {stats.cancelled}
+                                </span>
                                 <span className="badge bg-light text-dark p-2">
-                                Всего: {stats.total}
-                            </span>
+                                    Всего: {stats.total}
+                                </span>
                             </div>
                         </div>
 
@@ -476,26 +579,21 @@ function PatientCabinet({ onLogout }) {
                                                             <button
                                                                 className="btn btn-sm btn-outline-danger"
                                                                 onClick={() => handleCancelAppointment(appointment.id)}
+                                                                title="Отменить запись"
                                                             >
                                                                 Отменить
                                                             </button>
                                                         )}
-                                                        {appointment.status === 'COMPLETED' && (
+                                                        {(appointment.status === 'COMPLETED' || appointment.status === 'CANCELLED') && (
                                                             <button
-                                                                className="btn btn-sm btn-outline-primary"
-                                                                onClick={() => handleViewAppointmentDetails(appointment)}
+                                                                className="btn btn-sm btn-outline-danger"
+                                                                onClick={() => handleDeleteAppointment(appointment.id)}
+                                                                title="Удалить запись"
                                                             >
-                                                                Детали
+                                                                Удалить
                                                             </button>
                                                         )}
-                                                        {appointment.status === 'CANCELLED' && (
-                                                            <button
-                                                                className="btn btn-sm btn-outline-success"
-                                                                onClick={() => handleReBookAppointment(appointment)}
-                                                            >
-                                                                Записаться
-                                                            </button>
-                                                        )}
+                                                        {/* Убираем кнопку "Подробнее" для завершенных/отмененных записей, если нужно */}
                                                         <button
                                                             className="btn btn-sm btn-outline-secondary"
                                                             onClick={() => handleViewAppointmentDetails(appointment)}
@@ -510,6 +608,39 @@ function PatientCabinet({ onLogout }) {
                                         </tbody>
                                     </table>
                                 </div>
+                            )}
+                        </div>
+                        {/* Кнопки управления редактированием */}
+                        <div className="text-center mb-4">
+                            {isEditing ? (
+                                <div>
+                                    <button
+                                        className="btn btn-success me-2"
+                                        onClick={handleEditUser}
+                                        disabled={editLoading}
+                                    >
+                                        {editLoading ? 'Сохранение...' : 'Сохранить изменения'}
+                                    </button>
+                                    <button
+                                        className="btn btn-secondary"
+                                        onClick={() => {
+                                            setIsEditing(false);
+                                            setEditForm({ username, email });
+                                            setEditError('');
+                                        }}
+                                        disabled={editLoading}
+                                    >
+                                        Отмена
+                                    </button>
+                                </div>
+                            ) : (
+                                <button
+                                    className="btn btn-outline-primary"
+                                    onClick={() => setIsEditing(true)}
+                                >
+                                    <i className="bi bi-pencil me-2"></i>
+                                    Редактировать профиль
+                                </button>
                             )}
                         </div>
 
