@@ -9,13 +9,13 @@ function PatientCabinet({ onLogout }) {
     const [role, setRole] = useState('');
     const [id, setId] = useState('');
     const [avatar, setAvatar] = useState(null);
-    const [visitsCount, setVisitsCount] = useState('');
+    const [visitsCount, setVisitsCount] = useState(0);
     const [appointments, setAppointments] = useState([]);
     const [loadingAppointments, setLoadingAppointments] = useState(true);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
-    const [activeTab, setActiveTab] = useState('scheduled'); // scheduled, completed, cancelled
+    const [activeTab, setActiveTab] = useState('scheduled');
     const navigate = useNavigate();
     const [isEditing, setIsEditing] = useState(false);
     const [editForm, setEditForm] = useState({
@@ -24,6 +24,14 @@ function PatientCabinet({ onLogout }) {
     });
     const [editError, setEditError] = useState('');
     const [editLoading, setEditLoading] = useState(false);
+
+    // Функция для добавления временной метки к URL аватара
+    const getAvatarUrlWithTimestamp = (avatarUrl) => {
+        if (!avatarUrl) return null;
+        const baseUrl = avatarUrl.split('?')[0];
+        const timestamp = Date.now();
+        return `${baseUrl}?t=${timestamp}`;
+    };
 
     // Функция для проверки, является ли аватар дефолтным
     const isDefaultAvatar = (avatarUrl) => {
@@ -52,17 +60,27 @@ function PatientCabinet({ onLogout }) {
                         "Content-Type": "application/json"
                     }
                 });
-                console.log(response.data);
-                setUsername(response.data.username);
-                setEmail(response.data.email);
-                setRole(response.data.role);
-                setId(response.data.id);
-                setAvatar(response.data.avatar);
-                setVisitsCount(response.data.visitsCount);
+                console.log('User data:', response.data);
+
+                // Безопасно устанавливаем данные
+                setUsername(response.data.username || '');
+                setEmail(response.data.email || '');
+                setRole(response.data.role || 'USER');
+                setId(response.data.id || '');
+
+                // Добавляем временную метку для предотвращения кэширования
+                const avatarUrl = response.data.avatar;
+                if (avatarUrl) {
+                    setAvatar(getAvatarUrlWithTimestamp(avatarUrl));
+                } else {
+                    setAvatar(null);
+                }
+
+                setVisitsCount(response.data.visitsCount || 0);
 
                 setEditForm({
-                    username: response.data.username,
-                    email: response.data.email,
+                    username: response.data.username || '',
+                    email: response.data.email || '',
                 });
             } catch (error) {
                 const errorMessage = getErrorMessage(error);
@@ -81,7 +99,7 @@ function PatientCabinet({ onLogout }) {
                     withCredentials: true,
                     headers: {"Content-Type": "application/json"}
                 });
-                setAppointments(response.data);
+                setAppointments(response.data || []);
             } catch (error) {
                 console.error('Ошибка при загрузке записей:', getErrorMessage(error));
                 setAppointments([]);
@@ -92,10 +110,12 @@ function PatientCabinet({ onLogout }) {
 
         fetchUserInfo();
         fetchUserAppointments();
-    }, []);
+    }, [navigate]);
 
     // Фильтрация записей по статусу
     const getFilteredAppointments = () => {
+        if (!Array.isArray(appointments)) return [];
+
         switch (activeTab) {
             case 'scheduled':
                 return appointments.filter(app => app.status === 'SCHEDULED');
@@ -110,6 +130,10 @@ function PatientCabinet({ onLogout }) {
 
     // Получение статистики по записям
     const getAppointmentStats = () => {
+        if (!Array.isArray(appointments)) {
+            return { scheduled: 0, completed: 0, cancelled: 0, total: 0 };
+        }
+
         const scheduled = appointments.filter(app => app.status === 'SCHEDULED').length;
         const completed = appointments.filter(app => app.status === 'COMPLETED').length;
         const cancelled = appointments.filter(app => app.status === 'CANCELLED').length;
@@ -161,15 +185,26 @@ function PatientCabinet({ onLogout }) {
             setUploadProgress(0);
             alert('Аватар успешно обновлен!');
 
+            // Обновляем URL аватара с временной меткой
+            const timestamp = Date.now();
+
+            // Получаем обновленные данные с сервера
             try {
                 const userResponse = await api.get('/user/dashboard', {
                     withCredentials: true
                 });
-                setAvatar(userResponse.data.avatar);
+
+                if (userResponse.data.avatar) {
+                    const newAvatarUrl = getAvatarUrlWithTimestamp(userResponse.data.avatar);
+                    setAvatar(newAvatarUrl);
+                } else {
+                    setAvatar(null);
+                }
             } catch (dashboardError) {
-                console.log('Не удалось обновить данные');
+                console.log('Не удалось обновить данные с сервера, обновляем локально');
+                // Если не удалось получить с сервера, добавляем параметр к текущему URL
                 if (avatar) {
-                    const newAvatarUrl = `${avatar}?t=${Date.now()}`;
+                    const newAvatarUrl = getAvatarUrlWithTimestamp(avatar);
                     setAvatar(newAvatarUrl);
                 }
             }
@@ -195,7 +230,14 @@ function PatientCabinet({ onLogout }) {
             const response = await api.get('/user/dashboard', {
                 withCredentials: true
             });
-            setAvatar(response.data.avatar);
+
+            const avatarUrl = response.data.avatar;
+            if (avatarUrl) {
+                setAvatar(getAvatarUrlWithTimestamp(avatarUrl));
+            } else {
+                setAvatar(null);
+            }
+
             alert('Аватар удален!');
 
         } catch (error) {
@@ -242,16 +284,6 @@ function PatientCabinet({ onLogout }) {
         } catch (error) {
             alert(getErrorMessage(error));
         }
-    };
-
-    // Функция для повторной записи (на основе отмененной записи)
-    const handleReBookAppointment = (appointment) => {
-        navigate('/appointment', {
-            state: {
-                doctorId: appointment.doctorId,
-                symptoms: appointment.symptoms
-            }
-        });
     };
 
     const handleEditUser = async () => {
@@ -341,6 +373,13 @@ function PatientCabinet({ onLogout }) {
                                         src={avatar}
                                         alt="User Avatar"
                                         className="avatar-image"
+                                        onError={(e) => {
+                                            // Если изображение не загрузилось, пробуем без параметра запроса
+                                            const baseUrl = avatar.split('?')[0];
+                                            if (e.target.src !== baseUrl) {
+                                                e.target.src = baseUrl;
+                                            }
+                                        }}
                                         style={{
                                             width: '150px',
                                             height: '150px',
@@ -415,7 +454,7 @@ function PatientCabinet({ onLogout }) {
                         {/* Информация о пользователе */}
                         <div className="text-center mb-4">
                             <p><strong>ID:</strong> {id}</p>
-                            <p><strong>Количество посещений:</strong> {visitsCount}</p>
+
                             {isEditing ? (
                                 <div className="mb-3">
                                     <div className="mb-2">
@@ -526,10 +565,9 @@ function PatientCabinet({ onLogout }) {
                                 </div>
                             ) : filteredAppointments.length === 0 ? (
                                 <div className="text-center py-3">
-                                    <i className={`bi ${
-                                        activeTab === 'scheduled' ? 'bi-calendar-x' :
-                                            activeTab === 'completed' ? 'bi-calendar-check' :
-                                                'bi-calendar-x'
+                                    <i className={`bi ${activeTab === 'scheduled' ? 'bi-calendar-x' :
+                                        activeTab === 'completed' ? 'bi-calendar-check' :
+                                            'bi-calendar-x'
                                     } text-muted`} style={{fontSize: '3rem'}}></i>
                                     <p className="mt-2 text-muted">
                                         {activeTab === 'scheduled' && 'Нет запланированных записей'}
@@ -562,10 +600,10 @@ function PatientCabinet({ onLogout }) {
                                         <tbody>
                                         {filteredAppointments.map(appointment => (
                                             <tr key={appointment.id}>
-                                                <td>{appointment.doctorName}</td>
-                                                <td>{appointment.specialization}</td>
-                                                <td>{appointment.appointmentDate}</td>
-                                                <td>{appointment.appointmentTime}</td>
+                                                <td>{appointment.doctorName || 'Не указан'}</td>
+                                                <td>{appointment.specialization || 'Не указана'}</td>
+                                                <td>{appointment.appointmentDate || 'Не указана'}</td>
+                                                <td>{appointment.appointmentTime || 'Не указано'}</td>
                                                 <td>
                                                     <span
                                                         className={`badge ${getStatusBadgeClass(appointment.status)}`}>
@@ -595,7 +633,6 @@ function PatientCabinet({ onLogout }) {
                                                                 Удалить
                                                             </button>
                                                         )}
-                                                        {/* Убираем кнопку "Подробнее" для завершенных/отмененных записей, если нужно */}
                                                         <button
                                                             className="btn btn-sm btn-outline-secondary"
                                                             onClick={() => handleViewAppointmentDetails(appointment)}

@@ -1,33 +1,17 @@
 import api from './Api/Api.jsx';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 
 function CurrentTime() {
     const [time, setTime] = useState(null);
     const [error, setError] = useState('');
 
-    const fetchInitialTime = async () => {
-        try {
-            const response = await api.get("/time");
-            const parsedTime = parseTime(response.data);
-            setTime(parsedTime);
-        } catch (error) {
-            setError("Ошибка при загрузке времени");
-        }
-    };
-
-    const parseTime = (timeString) => {
+    const parseTime = useCallback((timeString) => {
         const [datePart, timePart] = timeString.split(" ");
         const [day, month, year] = datePart.split(".");
         return new Date(`${year}-${month}-${day}T${timePart}`);
-    };
+    }, []);
 
-    const updateTime = () => {
-        if (time) {
-            setTime(new Date(time.getTime() + 1000));
-        }
-    };
-
-    const formatTime = (timeObject) => {
+    const formatTime = useCallback((timeObject) => {
         if (!timeObject) return "";
         return timeObject.toLocaleString("ru-RU", {
             day: "2-digit",
@@ -37,11 +21,27 @@ function CurrentTime() {
             minute: "2-digit",
             second: "2-digit"
         });
-    };
+    }, []);
+
+    const fetchInitialTime = useCallback(async () => {
+        try {
+            const response = await api.get("/time");
+            const parsedTime = parseTime(response.data);
+            setTime(parsedTime);
+        } catch (error) {
+            setError("Ошибка при загрузке времени");
+        }
+    }, [parseTime]);
+
+    const updateTime = useCallback(() => {
+        if (time) {
+            setTime(new Date(time.getTime() + 1000));
+        }
+    }, [time]);
 
     useEffect(() => {
         fetchInitialTime();
-    }, []);
+    }, [fetchInitialTime]);
 
     useEffect(() => {
         if (time) {

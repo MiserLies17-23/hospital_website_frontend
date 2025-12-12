@@ -15,6 +15,14 @@ function UpdateUser() {
     const [loading, setLoading] = useState(false);
     const [avatarLoading, setAvatarLoading] = useState(false);
 
+    // Функция для добавления временной метки к URL аватара
+    const getAvatarUrlWithTimestamp = (avatarUrl) => {
+        if (!avatarUrl) return null;
+        const baseUrl = avatarUrl.split('?')[0];
+        const timestamp = Date.now();
+        return `${baseUrl}?t=${timestamp}`;
+    };
+
     // Функция для проверки, является ли аватар дефолтным
     const isDefaultAvatar = (avatarUrl) => {
         if (!avatarUrl) return true;
@@ -41,7 +49,12 @@ function UpdateUser() {
                         "Content-Type": "application/json"
                     }
                 });
-                setUser(response.data);
+
+                const userData = response.data;
+                if (userData.avatar) {
+                    userData.avatar = getAvatarUrlWithTimestamp(userData.avatar);
+                }
+                setUser(userData);
             } catch (error) {
                 setError('Не удалось загрузить данные пользователя');
             }
@@ -79,8 +92,13 @@ function UpdateUser() {
                 },
             });
 
-            // Обновляем аватар пользователя
-            setUser(prev => ({ ...prev, avatar: response.data.avatarUrl }));
+            // Добавляем временную метку для предотвращения кэширования
+            let newAvatarUrl = response.data.avatarUrl;
+            if (newAvatarUrl) {
+                newAvatarUrl = getAvatarUrlWithTimestamp(newAvatarUrl);
+            }
+
+            setUser(prev => ({ ...prev, avatar: newAvatarUrl }));
             alert('Аватар успешно обновлен!');
         } catch (error) {
             console.error('Ошибка при загрузке аватара:', error);
@@ -154,6 +172,12 @@ function UpdateUser() {
                                             src={user.avatar}
                                             alt="User Avatar"
                                             className="avatar-image"
+                                            onError={(e) => {
+                                                const baseUrl = user.avatar.split('?')[0];
+                                                if (e.target.src !== baseUrl) {
+                                                    e.target.src = baseUrl;
+                                                }
+                                            }}
                                             style={{
                                                 width: '120px',
                                                 height: '120px',

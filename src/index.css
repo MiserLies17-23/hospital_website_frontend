@@ -573,3 +573,91 @@ a:active {
 .doctor-card:hover {
     transform: translateY(-5px);
 }
+
+/* Стили для аватара с обработкой ошибок */
+.avatar-image {
+    transition: opacity 0.3s ease;
+}
+
+.avatar-image.loading {
+    opacity: 0.5;
+}
+
+/* Анимация при обновлении аватара */
+@keyframes avatarUpdate {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.avatar-updated {
+    animation: avatarUpdate 0.5s ease;
+}
+
+/* Оверлей для загрузки аватара */
+.avatar-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+    z-index: 10;
+}
+
+/* Индикатор прогресса загрузки */
+.avatar-progress {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 10px;
+    border-radius: 10px;
+    z-index: 20;
+}
+
+/* Плейсхолдер для отсутствующего аватара */
+.avatar-placeholder {
+    transition: all 0.3s ease;
+}
+
+.avatar-placeholder:hover {
+    border-color: #007bff !important;
+    color: #007bff !important;
+}
+
+/* Контейнер для аватара с эффектом при наведении */
+.avatar-container:hover .avatar-image {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(0, 123, 255, 0.3);
+}
+
+/* Стили для кнопок управления аватаром */
+.avatar-controls {
+    margin-top: 10px;
+}
+
+.avatar-controls .btn {
+    margin: 0 5px;
+    transition: all 0.2s ease;
+}
+
+/* Адаптивность для аватара */
+@media (max-width: 768px) {
+    .avatar-image {
+        width: 100px !important;
+        height: 100px !important;
+    }
+
+    .avatar-placeholder {
+        width: 100px !important;
+        height: 100px !important;
+    }
+}
