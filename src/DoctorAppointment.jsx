@@ -45,7 +45,7 @@ function DoctorAppointment({ isAuthenticated }) {
                 setLoadingSlots(true);
                 try {
                     const response = await api.get(`/appointments/doctor/${selectedDoctor}/busy-slots`, {
-                        params: { date: appointmentDate },
+                        params: {date: appointmentDate},
                         withCredentials: true
                     });
 
@@ -58,8 +58,6 @@ function DoctorAppointment({ isAuthenticated }) {
                         setAppointmentTime('');
                     }
                 } catch (error) {
-                    // Локально обрабатываем ошибку, не затрагивая doctors
-                    console.error('Ошибка загрузки занятых слотов:', getErrorMessage(error));
                     // Если не удалось загрузить занятые слоты, показываем все как доступные
                     const allSlots = generateTimeSlots();
                     setAvailableSlots(allSlots);

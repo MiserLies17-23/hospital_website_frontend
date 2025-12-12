@@ -9,6 +9,7 @@ function PatientCabinet({ onLogout }) {
     const [role, setRole] = useState('');
     const [id, setId] = useState('');
     const [avatar, setAvatar] = useState(null);
+    const [visitsCount, setVisitsCount] = useState('');
     const [appointments, setAppointments] = useState([]);
     const [loadingAppointments, setLoadingAppointments] = useState(true);
     const [error, setError] = useState('');
@@ -57,6 +58,7 @@ function PatientCabinet({ onLogout }) {
                 setRole(response.data.role);
                 setId(response.data.id);
                 setAvatar(response.data.avatar);
+                setVisitsCount(response.data.visitsCount);
 
                 setEditForm({
                     username: response.data.username,
@@ -262,7 +264,7 @@ function PatientCabinet({ onLogout }) {
         setEditError('');
 
         try {
-           await api.post('/user/edit', {
+            await api.post('/user/edit', {
                 id: id,
                 username: editForm.username,
                 email: editForm.email,
@@ -378,7 +380,7 @@ function PatientCabinet({ onLogout }) {
                             </div>
 
                             <div className="mt-3">
-                                {/* Кнопка изменения аватара показывается только в режиме редактирования */}
+                                {/* Кнопка изменения аватара (показывается только в режиме редактирования) */}
                                 {isEditing && (
                                     <>
                                         <input
@@ -413,7 +415,7 @@ function PatientCabinet({ onLogout }) {
                         {/* Информация о пользователе */}
                         <div className="text-center mb-4">
                             <p><strong>ID:</strong> {id}</p>
-
+                            <p><strong>Количество посещений:</strong> {visitsCount}</p>
                             {isEditing ? (
                                 <div className="mb-3">
                                     <div className="mb-2">

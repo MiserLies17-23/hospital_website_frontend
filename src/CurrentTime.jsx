@@ -53,7 +53,7 @@ function CurrentTime() {
     return (
         <div>
             {error && <div>{error}</div>}
-            <div>{formatTime(time)}</div>
+            <div>Время: {formatTime(time)}</div>
         </div>
     );
 }

@@ -9,7 +9,6 @@ import DoctorAppointment from "./DoctorAppointment";
 import CurrentTime from './CurrentTime';
 import NewsPage from './NewsPage';
 import AuthButtons from './AuthButtons';
-import VisitorCount from './VisitorCount';
 import AdminPanel from './AdminPanel';
 import UpdateUser from './UpdateUser';
 import {getErrorMessage} from "./utils/errorHandler";
@@ -94,7 +93,6 @@ function App() {
 
                     <div className="center-block">
                         <CurrentTime />
-                        <VisitorCount />
                     </div>
 
                     <div>
