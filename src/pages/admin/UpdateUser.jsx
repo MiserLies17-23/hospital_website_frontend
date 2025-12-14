@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import api from './Api/Api.jsx';
+import api from '../../api/Api.jsx';
 
 function UpdateUser() {
     const { id } = useParams();

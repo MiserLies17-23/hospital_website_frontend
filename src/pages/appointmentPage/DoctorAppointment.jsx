@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import api from './Api/Api.jsx';
-import { getErrorMessage } from "./utils/errorHandler";
-import './index.css';
+import api from '../../api/Api.jsx';
+import { getErrorMessage } from "../../utils/errorHandler";
+import '../../index.css';
 import { Link } from 'react-router-dom';
 
 function DoctorAppointment({ isAuthenticated }) {

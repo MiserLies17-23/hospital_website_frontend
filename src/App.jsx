@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
-import api from './Api/Api.jsx';
-import LoginPage from './LoginPage';
-import SignupPage from './SignUpPage';
-import PatientCabinet from './PatientCabinet';
-import HospitalPage from './HospitalPage';
-import DoctorAppointment from "./DoctorAppointment";
-import CurrentTime from './CurrentTime';
-import NewsPage from './NewsPage';
-import AuthButtons from './AuthButtons';
-import AdminPanel from './AdminPanel';
-import UpdateUser from './UpdateUser';
+import api from './api/Api.jsx';
+import LoginPage from './pages/authPages/LoginPage';
+import SignupPage from './pages/authPages/SignUpPage';
+import PatientCabinet from './pages/patientCapinetPage/PatientCabinet';
+import HospitalPage from './pages/hospitalPage/HospitalPage';
+import DoctorAppointment from "./pages/appointmentPage/DoctorAppointment";
+import CurrentTime from './pages/currentTime/CurrentTime';
+import NewsPage from './pages/newsPage/NewsPage';
+import AuthButtons from './components/common/button/AuthButtons';
+import AdminPanel from './pages/admin/AdminPanel';
+import UpdateUser from './pages/admin/UpdateUser';
 import {getErrorMessage} from "./utils/errorHandler";
 
 function App() {

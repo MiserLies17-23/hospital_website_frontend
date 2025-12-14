@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import api from './Api/Api.jsx';
-import { getErrorMessage } from "./utils/errorHandler";
+import api from '../../api/Api.jsx';
+import { getErrorMessage } from "../../utils/errorHandler";
 import { useNavigate } from 'react-router-dom';
 import { MDBContainer, MDBInput, MDBBtn } from 'mdb-react-ui-kit';
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import api from './Api/Api.jsx';
-import { getErrorMessage } from "./utils/errorHandler";
+import api from '../../api/Api.jsx';
+import { getErrorMessage } from "../../utils/errorHandler";
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';

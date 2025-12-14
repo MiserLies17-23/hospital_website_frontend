@@ -1,4 +1,4 @@
-import api from './Api/Api.jsx';
+import api from '../../api/Api.jsx';
 import React, { useEffect, useState } from 'react';
 
 function CurrentTime() {
