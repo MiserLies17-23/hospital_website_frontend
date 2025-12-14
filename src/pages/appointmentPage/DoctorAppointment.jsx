@@ -25,7 +25,7 @@ function DoctorAppointment({ isAuthenticated }) {
     useEffect(() => {
         const fetchDoctors = async () => {
             try {
-                const response = await api.get('/doctor/doctors');
+                const response = await api.get('/doctor');
                 console.log('Врачи загружены:', response.data); // Лог успеха
                 setDoctors(response.data);
             } catch (error) {
