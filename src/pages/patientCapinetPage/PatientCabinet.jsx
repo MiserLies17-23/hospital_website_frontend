@@ -454,7 +454,7 @@ function PatientCabinet({ onLogout }) {
                         {/* Информация о пользователе */}
                         <div className="text-center mb-4">
                             <p><strong>ID:</strong> {id}</p>
-
+                            <p><strong>Количество посещений:</strong> {visitsCount}</p>
                             {isEditing ? (
                                 <div className="mb-3">
                                     <div className="mb-2">
