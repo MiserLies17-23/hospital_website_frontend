@@ -1,0 +1,66 @@
+@import '../../../assets/styles/variables.css';
+
+.card {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: var(--border-radius);
+    transition: all var(--transition-speed) ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--box-shadow);
+}
+
+.card-header {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 1px solid #e9ecef;
+    background-color: #f8f9fa;
+}
+
+.card-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.card-body {
+    padding: var(--spacing-lg);
+}
+
+.card-footer {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-top: 1px solid #e9ecef;
+    background-color: #f8f9fa;
+}
+
+/* Doctor card specific */
+.doctor-card {
+    height: 100%;
+    border: 1px solid #e9ecef;
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    background: white;
+    transition: all var(--transition-speed) ease;
+}
+
+.doctor-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--box-shadow);
+}
+
+.doctor-card .card-title {
+    font-size: 1.1rem;
+    margin-bottom: var(--spacing-xs);
+}
+
+.doctor-card .specialization {
+    color: var(--secondary-color);
+    font-size: 0.9rem;
+    margin-bottom: var(--spacing-xs);
+}
+
+.doctor-card .phone {
+    font-size: 0.85rem;
+    color: #666;
+}

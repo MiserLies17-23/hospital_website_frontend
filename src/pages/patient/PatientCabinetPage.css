@@ -1,0 +1,25 @@
+.patient-cabinet-page {
+    min-height: 80vh;
+}
+
+.avatar-container {
+    transition: all 0.3s ease;
+}
+
+.avatar-container:hover .avatar-image {
+    transform: scale(1.05);
+}
+
+.avatar-placeholder {
+    transition: all 0.3s ease;
+}
+
+.avatar-placeholder:hover {
+    border-color: #007bff !important;
+    color: #007bff !important;
+}
+
+.table th {
+    font-weight: 600;
+    background-color: #f8f9fa;
+}

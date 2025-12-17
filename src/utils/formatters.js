@@ -1,0 +1,39 @@
+export const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+    });
+};
+
+export const formatTime = (timeString) => {
+    if (!timeString) return '';
+    return timeString;
+};
+
+export const formatDateTime = (dateString, timeString) => {
+    return `${formatDate(dateString)} ${formatTime(timeString)}`;
+};
+
+export const getAvatarUrlWithTimestamp = (avatarUrl) => {
+    if (!avatarUrl) return null;
+    const baseUrl = avatarUrl.split('?')[0];
+    const timestamp = Date.now();
+    return `${baseUrl}?t=${timestamp}`;
+};
+
+export const isDefaultAvatar = (avatarUrl) => {
+    if (!avatarUrl) return true;
+
+    const defaultAvatarPatterns = [
+        'default-avatar',
+        'placeholder',
+        'gravatar',
+        '/images/default',
+        '//www.gravatar.com/avatar/'
+    ];
+
+    return defaultAvatarPatterns.some(pattern => avatarUrl.includes(pattern));
+};
