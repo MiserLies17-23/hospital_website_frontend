@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { userApi } from '../../api/userApi';
+import { userApi } from '../../api';
+import { authApi} from "../../api";
 import { useAppointments } from '../../hooks/useAppointments';
 import { getAvatarUrlWithTimestamp, isDefaultAvatar } from '../../utils/formatters';
 import Loader from '../../components/common/Loader/Loader';
@@ -40,7 +41,7 @@ const PatientCabinetPage = () => {
 
     const fetchUserData = async () => {
         try {
-            const response = await userApi.getProfile();
+            const response = await authApi.getProfile();
             const userData = response.data;
             setUser(userData);
             setEditForm({
@@ -116,7 +117,7 @@ const PatientCabinetPage = () => {
                 },
             });
 
-            const userResponse = await userApi.getProfile();
+            const userResponse = await authApi.getProfile();
             const newAvatarUrl = getAvatarUrlWithTimestamp(userResponse.data.avatar);
             setAvatar(newAvatarUrl);
             alert('Аватар успешно обновлен!');
@@ -135,7 +136,19 @@ const PatientCabinetPage = () => {
 
         try {
             await userApi.deleteAvatar();
-            setAvatar(null);
+
+            const userResponse = await authApi.getProfile();
+            const updatedUser = userResponse.data;
+
+            if (updatedUser.avatar) {
+                const newAvatarUrl = getAvatarUrlWithTimestamp(updatedUser.avatar);
+                setAvatar(newAvatarUrl);
+            } else {
+                setAvatar(null);
+            }
+
+            setUser(prev => ({ ...prev, avatar: updatedUser.avatar }));
+
             alert('Аватар удален!');
         } catch (error) {
             console.error('Ошибка при удалении аватара:', error);
