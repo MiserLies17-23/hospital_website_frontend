@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { userApi } from '../../api/userApi';
+import { userApi } from '../../api';
 import Loader from '../../components/common/Loader/Loader';
 import './AdminPanelPage.css';
 
@@ -92,7 +92,7 @@ const AdminPanelPage = () => {
                                             >
                                                 Изменить
                                             </Link>
-                                            {user.id !== 1 && ( // Не даем удалить главного админа
+                                            {user.id !== 1 && (
                                                 <button
                                                     className="btn btn-danger"
                                                     onClick={() => deleteUser(user.id)}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { userApi } from '../../api/userApi';
+import { userApi } from '../../api';
 import { getAvatarUrlWithTimestamp, isDefaultAvatar } from '../../utils/formatters';
 import Loader from '../../components/common/Loader/Loader';
 import './UpdateUserPage.css';

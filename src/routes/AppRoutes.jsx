@@ -15,7 +15,7 @@ import PatientCabinetPage from '../pages/patient/PatientCabinetPage';
 
 // Админ страницы
 import AdminPanelPage from '../pages/admin/AdminPanelPage';
-import UpdateUserPage from '../pages/admin/UpdateUserPage.css';
+import UpdateUserPage from '../pages/admin/UpdateUserPage';
 
 const AppRoutes = () => {
     return (
