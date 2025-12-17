@@ -32,7 +32,8 @@ function SignUpPage() {
             });
 
         } catch (error) {
-            setError(getErrorMessage(error));
+            const errorMessage = getErrorMessage(error);
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }

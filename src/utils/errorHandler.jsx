@@ -1,39 +1,21 @@
 // Компонент для обработки исключений
+// utils/errorHandler.jsx
 export const getErrorMessage = (error) => {
-
     if (!error.response) {
-        return 'Ошибка сети. Проверьте подключение к интернету';
+        return 'Нет подключения к серверу';
     }
 
-    const { status, data } = error.response;
+    const { data } = error.response;
 
-    let message = 'Произошла ошибка';
+    // Если сервер вернул сообщение об ошибке
+    if (data && data.message) {
+        return data.message;
+    }
 
+    // Если пришла просто строка
     if (typeof data === 'string') {
-        message = data;
-    } else if (data?.message) {
-        message = data.message;
-    } else if (data?.error) {
-        message = data.error;
+        return data;
     }
 
-    // сообщения по статусам
-    if (status === 404) {
-        if (message.includes('Пользователь')) return 'Пользователь не найден';
-        if (message.includes('Врач')) return 'Врач не найден';
-        if (message.includes('Запись')) return 'Запись не найдена';
-        return 'Не найдено';
-    }
-
-    if (status === 409) {
-        if (message.includes('email')) return 'Пользователь с таким email уже существует';
-        if (message.includes('username')) return 'Пользователь с таким именем уже существует';
-        if (message.includes('время')) return 'Выбранное время уже занято';
-        return 'Конфликт данных';
-    }
-
-    if (status === 401) return 'Неверный пароль или логин';
-    if (status === 500) return 'Ошибка сервера';
-
-    return message;
+    return 'Произошла ошибка';
 };
