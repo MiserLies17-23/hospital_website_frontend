@@ -1,43 +1,26 @@
 import React, { useState, useEffect } from 'react';
+import {newsApi} from "../../api/newsApi.js";
 import './NewsPage.css';
 
 const NewsPage = () => {
     const [news, setNews] = useState([]);
     const [loading, setLoading] = useState(true);
+    const setError = useState('');
 
     useEffect(() => {
-        const mockNews = [
-            {
-                id: 1,
-                title: 'Открытие нового отделения',
-                date: '2024-01-15',
-                content: 'Мы рады сообщить об открытии нового отделения кардиологии, оснащенного современным оборудованием.'
-            },
-            {
-                id: 2,
-                title: 'Новое медицинское оборудование',
-                date: '2024-01-10',
-                content: 'Больница получила новое современное оборудование для точной диагностики и лечения.'
-            },
-            {
-                id: 3,
-                title: 'Акция для пенсионеров',
-                date: '2024-01-05',
-                content: 'Скидки 20% на все услуги для пенсионеров в течение января 2024 года.'
-            },
-            {
-                id: 4,
-                title: 'Профилактические осмотры',
-                date: '2024-01-01',
-                content: 'Приглашаем на бесплатные профилактические осмотры всех желающих.'
-            },
-        ];
+        fetchNews();},
+        []);
 
-        setTimeout(() => {
-            setNews(mockNews);
+    const fetchNews = async () => {
+        try {
+            const response = await newsApi.getAllNews();
+            setNews(response.data);
+        } catch (error) {
+            setError('Не удалось загрузить новости');
+        } finally {
             setLoading(false);
-        }, 500);
-    }, []);
+        }
+    }
 
     if (loading) {
         return (
