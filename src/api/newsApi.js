@@ -1,8 +1,24 @@
 import api from './axios';
 
 export const newsApi = {
-    getAllNews: () => api.get('/news/'),
-    editNews: (id) => api.post(`/moderator/news/${id}/edit`),
-    deleteNews: (id) => api.delete(`/moderator/news/${id}/delete`),
-    addNews: () => api.post(`/moderator/news/add`)
+    // Получить все новости
+    getAll: () => api.get('/news'),
+
+    // Получить новость по ID
+    getById: (id) => api.get(`/news/${id}`),
+
+    // Создать новость
+    create: (newsData) => api.post('/news', newsData),
+
+    // Обновить новость
+    update: (id, newsData) => api.put(`/news/${id}`, newsData),
+
+    // Удалить новость
+    delete: (id) => api.delete(`/news/${id}`),
+
+    // Получить мои новости (для модератора)
+    getMyNews: () => api.get('/news/my'),
+
+    // Получить последние новости
+    getLatest: (limit = 5) => api.get(`/news/latest?limit=${limit}`)
 };

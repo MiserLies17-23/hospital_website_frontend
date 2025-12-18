@@ -1,0 +1,71 @@
+.news-management-page {
+    min-height: 80vh;
+    padding: 2rem 0;
+}
+
+.news-management-page .table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.news-management-page .table td {
+    vertical-align: middle;
+}
+
+.news-management-page .badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.news-management-page .btn-group .btn {
+    border-radius: 4px;
+    margin-right: 0.25rem;
+}
+
+.news-management-page .btn-group .btn:last-child {
+    margin-right: 0;
+}
+
+/* Стили для модальных окон */
+.modal-header {
+    border-bottom: 1px solid #dee2e6;
+    padding: 1rem 1.5rem;
+}
+
+.modal-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    border-top: 1px solid #dee2e6;
+    padding: 1rem 1.5rem;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .news-management-page .d-flex {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .news-management-page .table-responsive {
+        font-size: 0.875rem;
+    }
+
+    .news-management-page .btn-group {
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+
+    .news-management-page .btn-group .btn {
+        flex: 1;
+        min-width: 70px;
+    }
+}

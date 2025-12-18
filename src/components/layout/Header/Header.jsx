@@ -6,7 +6,7 @@ import AuthButtons from '../../common/AuthButtons/AuthButtons';
 import './Header.css';
 
 const Header = () => {
-    const { isAuthenticated, isAdmin, logout } = useAuth();
+    const { isAuthenticated, isAdmin, isModerator, logout } = useAuth();
     const navigate = useNavigate();
 
     const handleLogout = async () => {
@@ -33,6 +33,22 @@ const Header = () => {
                                 Личный кабинет
                             </Link>
                         )}
+
+                        {/* Кнопка управления новостями для модераторов и админов */}
+                        {(isModerator || isAdmin) && (
+                            <Link to="/news-management" className="btn btn-warning">
+                                <i className="bi bi-newspaper me-1"></i>
+                                Новости
+                            </Link>
+                        )}
+
+                        {/* Кнопка управления врачами для админов */}
+                        {isAdmin && (
+                            <Link to="/admin/doctors" className="btn btn-info">
+                                <i className="bi bi-people me-1"></i>
+                                Врачи
+                            </Link>
+                        )}
                     </div>
 
                     <div className="text-center">
@@ -43,6 +59,7 @@ const Header = () => {
                         <AuthButtons
                             isAuthenticated={isAuthenticated}
                             isAdmin={isAdmin}
+                            isModerator={isModerator}
                             onLogout={handleLogout}
                         />
                     </div>

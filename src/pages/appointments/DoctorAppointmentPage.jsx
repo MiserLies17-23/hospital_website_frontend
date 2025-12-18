@@ -18,7 +18,7 @@ const DoctorAppointmentPage = () => {
     const [error, setError] = useState('');
     const [showAuthModal, setShowAuthModal] = useState(false);
 
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, isAdmin } = useAuth();
     const navigate = useNavigate();
 
     const { doctors, loading: loadingDoctors } = useDoctors();
@@ -87,6 +87,15 @@ const DoctorAppointmentPage = () => {
     return (
         <div className="doctor-appointment-page">
             <h2 className="text-center mb-4">Запись на прием к врачу</h2>
+
+            {isAdmin && (
+                <div className="text-end mb-3">
+                    <Link to="/admin/doctors" className="btn btn-outline-info btn-sm">
+                        <i className="bi bi-gear me-1"></i>
+                        Управление врачами
+                    </Link>
+                </div>
+            )}
 
             {!isAuthenticated && (
                 <div className="alert alert-info text-center">

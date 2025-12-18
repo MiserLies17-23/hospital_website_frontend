@@ -1,0 +1,99 @@
+.doctor-detail-page {
+    min-height: 80vh;
+    padding: 2rem 0;
+}
+
+.doctor-detail-page .breadcrumb {
+    background-color: #f8f9fa;
+    padding: 0.75rem 1rem;
+    border-radius: 0.375rem;
+}
+
+.doctor-detail-page .card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border-radius: 0.5rem;
+}
+
+.doctor-detail-page .card-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.doctor-detail-page .badge.bg-info {
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+}
+
+.doctor-detail-page .doctor-info-item {
+    display: flex;
+    align-items: center;
+    font-size: 1.1rem;
+}
+
+.doctor-detail-page .doctor-info-item i {
+    font-size: 1.2rem;
+    width: 24px;
+}
+
+.doctor-detail-page .doctor-description {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #495057;
+    text-align: justify;
+}
+
+.doctor-detail-page .doctor-description p {
+    margin-bottom: 1.5rem;
+}
+
+.doctor-detail-page .stats-list .stat-item {
+    font-size: 1.1rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.doctor-detail-page .stats-list .stat-item:last-child {
+    border-bottom: none;
+}
+
+.doctor-detail-page .btn-group {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.doctor-detail-page .btn-group .btn {
+    border-radius: 0.375rem;
+    min-width: 120px;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .doctor-detail-page .card-title {
+        font-size: 1.5rem;
+    }
+
+    .doctor-detail-page .d-flex {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .doctor-detail-page .btn-group {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .doctor-detail-page .btn-group .btn {
+        flex: 1;
+        min-width: 120px;
+    }
+
+    .doctor-detail-page .doctor-info-item {
+        font-size: 1rem;
+    }
+
+    .doctor-detail-page .doctor-description {
+        font-size: 1rem;
+    }
+}

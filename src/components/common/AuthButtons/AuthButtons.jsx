@@ -2,11 +2,22 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import './AuthButtons.css';
 
-const AuthButtons = ({ isAuthenticated, isAdmin, onLogout }) => {
+const AuthButtons = ({ isAuthenticated, isAdmin, isModerator, onLogout }) => {
     return (
         <div className="auth-buttons">
             {isAuthenticated ? (
                 <div className="d-flex align-items-center gap-2">
+                    {/* Бейдж роли */}
+                    <div className="role-badge">
+                        {isAdmin ? (
+                            <span className="badge bg-warning">ADMIN</span>
+                        ) : isModerator ? (
+                            <span className="badge bg-info">MODERATOR</span>
+                        ) : (
+                            <span className="badge bg-secondary">USER</span>
+                        )}
+                    </div>
+
                     {isAdmin && (
                         <Link to="/admin" className="btn btn-warning btn-sm">
                             Админ панель
