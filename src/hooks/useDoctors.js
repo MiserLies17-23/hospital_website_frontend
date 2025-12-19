@@ -13,7 +13,7 @@ export const useDoctors = () => {
     const fetchDoctors = async () => {
         try {
             setLoading(true);
-            const response = await doctorsApi.getAll();
+            const response = await doctorsApi.getAllDoctors();
             setDoctors(response.data);
         } catch (error) {
             setError(error.message);

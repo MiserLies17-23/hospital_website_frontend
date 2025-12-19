@@ -5,6 +5,7 @@ export const userApi = {
     uploadAvatar: (formData) => api.post('/user/avatar', formData),
     deleteAvatar: () => api.delete('/user/avatar'),
     getAllUsers: () => api.get('/admin/users'),
+    addUser: (data) => api.post(`/admin/users/add`, data),
     getUserById: (id) => api.get(`/admin/users/${id}`),
     updateUser: (id, data) => api.post(`/admin/users/${id}/edit`, data),
     deleteUser: (id) => api.delete(`/admin/users/${id}/delete`),

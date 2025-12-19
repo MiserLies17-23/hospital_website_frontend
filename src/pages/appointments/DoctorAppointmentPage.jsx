@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useDoctors } from '../../hooks/useDoctors';
 import { useTimeSlots } from '../../hooks/useTimeSlots';
@@ -19,7 +19,6 @@ const DoctorAppointmentPage = () => {
     const [showAuthModal, setShowAuthModal] = useState(false);
 
     const { isAuthenticated } = useAuth();
-    const navigate = useNavigate();
 
     const { doctors, loading: loadingDoctors } = useDoctors();
     const { busySlots, availableSlots, loading: loadingSlots } = useTimeSlots(selectedDoctor, appointmentDate);

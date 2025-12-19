@@ -7,7 +7,7 @@ export const validateEmail = (email) => {
 
 export const validateUsername = (username) => {
     if (!username) return 'Имя пользователя обязательно';
-    if (username.length < 3) return 'Имя пользователя должно содержать минимум 3 символа';
+    if (username.length < 6) return 'Имя пользователя должно содержать минимум 3 символа';
     if (username.length > 30) return 'Имя пользователя не должно превышать 30 символов';
     return null;
 };

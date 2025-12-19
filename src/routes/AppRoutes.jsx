@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import PrivateRoute from './PrivateRoute';
 import AdminRoute from './AdminRoute';
+import ModeratorRoute from "./ModeratorRoute";
 
 // Публичные страницы
 import HospitalPage from '../pages/hospital/HospitalPage';
@@ -16,6 +17,12 @@ import PatientCabinetPage from '../pages/patient/PatientCabinetPage';
 // Админ страницы
 import AdminPanelPage from '../pages/admin/AdminPanelPage';
 import UpdateUserPage from '../pages/admin/UpdateUserPage';
+import UpdateDoctorPage from '../pages/admin/UpdateDoctorPage';
+import AddUserPage from "../pages/admin/AddUserPage";
+import AddDoctorPage from "../pages/admin/AddDoctorPage";
+import UpdateNewsPage from "../pages/moderator/UpdateNewsPage";
+import AddNewsPage from "../pages/moderator/AddNewsPage";
+import ModeratorPanelPage from "../pages/moderator/ModeratorPanelPage";
 
 const AppRoutes = () => {
     return (
@@ -36,6 +43,16 @@ const AppRoutes = () => {
             <Route element={<AdminRoute />}>
                 <Route path="/admin" element={<AdminPanelPage />} />
                 <Route path="/admin/users/:id/edit" element={<UpdateUserPage />} />
+                <Route path="/admin/users/add" element={<AddUserPage/>} />
+                <Route path="/admin/doctors/:id/edit" element={<UpdateDoctorPage />} />
+                <Route path="/admin/doctors/add" element={<AddDoctorPage />} />
+            </Route>
+
+            {/* Модератор маршруты (только для MODERATOR) */}
+            <Route element={<ModeratorRoute />}>
+                <Route path="/moderator" element={<ModeratorPanelPage />} />
+                <Route path="/moderator/news/add" element={<AddNewsPage />} />
+                <Route path="/moderator/news/:id/edit" element={<UpdateNewsPage />} />
             </Route>
         </Routes>
     );

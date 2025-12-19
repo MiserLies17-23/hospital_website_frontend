@@ -421,6 +421,15 @@ const PatientCabinetPage = () => {
                                         </button>
                                     )}
 
+                                    {user.role === "MODERATOR" && (
+                                        <button
+                                            className="btn btn-info"
+                                            onClick={() => navigate('/moderator')}
+                                        >
+                                            Панель модератора
+                                        </button>
+                                    )}
+
                                     <button
                                         className="btn btn-danger"
                                         onClick={logout}

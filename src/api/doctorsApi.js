@@ -1,6 +1,9 @@
 import api from './axios';
 
 export const doctorsApi = {
-    getAll: () => api.get('/doctor/'),
-    getById: (id) => api.get(`/doctor/${id}`),
+    getAllDoctors: () => api.get('/doctor/'),
+    getDoctorById: (id) => api.get(`/admin/doctors/${id}`),
+    deleteDoctor: (id) => api.delete(`/admin/doctors/${id}/delete`),
+    updateDoctor: (id, data) => api.post(`/admin/doctors/${id}/edit`, data),
+    addDoctor: (data) => api.post(`/admin/doctors/add`, data)
 };
