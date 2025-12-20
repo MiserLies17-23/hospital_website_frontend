@@ -28,10 +28,11 @@ export const isDefaultAvatar = (avatarUrl) => {
     if (!avatarUrl) return true;
 
     const defaultAvatarPatterns = [
+        'defaultUserImage',
         'default-avatar',
         'placeholder',
         'gravatar',
-        '/images/default',
+        '/images/defaultUserImage',
         '//www.gravatar.com/avatar/'
     ];
 
