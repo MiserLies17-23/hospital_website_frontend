@@ -31,6 +31,7 @@ const UpdateNewsPage = () => {
             setNews({
                 title: newsData.title || '',
                 content: newsData.content || '',
+                author: newsData.author || 'unknow',
                 date: originalDate,
             });
         } catch (error) {
@@ -95,13 +96,25 @@ const UpdateNewsPage = () => {
                                     <div className="mb-3">
                                         <label className="form-label">Текст статьи</label>
                                         <textarea
-                                            type="text"
                                             className="form-control"
                                             name="content"
                                             rows="8"
                                             value={news.content}
                                             onChange={handleChange}
                                             required
+                                        />
+                                    </div>
+
+                                    <div className="mb-3">
+                                        <label className="form-label">Автор</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            name="author"
+                                            value={news.author}
+                                            onChange={handleChange}
+                                            required
+                                            disabled
                                         />
                                     </div>
 

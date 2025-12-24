@@ -66,6 +66,7 @@ const ModeratorPanelPage = () => {
                             <tr>
                                 <th>ID</th>
                                 <th>Заголовок</th>
+                                <th>Автор</th>
                                 <th>Дата</th>
                                 <th>Действия</th>
                             </tr>
@@ -75,6 +76,7 @@ const ModeratorPanelPage = () => {
                                 <tr key={item.id}>
                                     <td>{item.id}</td>
                                     <td>{item.title}</td>
+                                    <td>{item.author}</td>
                                     <td>{item.date}</td>
                                     <td>
                                         <div className="btn-group btn-group-sm">
