@@ -25,12 +25,12 @@ const AddNewsPage = () => {
 
         try {
             // Добавляем текущую дату автоматически
-            const newsWithDate = {
-                ...news,
-                date: new Date().toISOString().split('T')[0] // Сегодняшняя дата
-            };
+            const newsData = {
+                title: news.title,
+                content: news.content
+            }
 
-            await newsApi.addNews(newsWithDate);
+            await newsApi.addNews(newsData);
             alert('Новость успешно создана!');
             navigate('/moderator');
         } catch (error) {

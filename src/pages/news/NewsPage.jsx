@@ -15,6 +15,9 @@ const NewsPage = () => {
         try {
             const response = await newsApi.getAllNews();
             setNews(response.data);
+            console.log('Первая новость: ', response.data[0].title);
+            console.log('Дата: ', response.data[0].date);
+            console.log('Контент: ', response.data[0].contents);
         } catch (error) {
             setError('Не удалось загрузить новости');
         } finally {

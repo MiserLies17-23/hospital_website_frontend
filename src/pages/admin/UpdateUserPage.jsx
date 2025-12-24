@@ -11,6 +11,7 @@ const UpdateUserPage = () => {
 
     const [user, setUser] = useState({
         username: '',
+        password: '',
         email: '',
         role: '',
         avatar: ''
@@ -215,6 +216,7 @@ const UpdateUserPage = () => {
                                         >
                                             <option value="">Выберите роль</option>
                                             <option value="USER">Пользователь</option>
+                                            <option value="MODERATOR">Модератор</option>
                                             <option value="ADMIN">Администратор</option>
                                         </select>
                                     </div>

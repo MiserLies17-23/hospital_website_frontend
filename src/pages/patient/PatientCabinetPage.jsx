@@ -191,6 +191,7 @@ const PatientCabinetPage = () => {
             await userApi.updateProfile({
                 id: user.id,
                 username: editForm.username,
+                password: editForm.password,
                 email: editForm.email,
             });
 
@@ -346,6 +347,15 @@ const PatientCabinetPage = () => {
                                                     value={editForm.email}
                                                     onChange={(e) => setEditForm({...editForm, email: e.target.value})}
                                                     placeholder="Email"
+                                                />
+                                            </div>
+                                            <div className="mb-2">
+                                                <input
+                                                    type="password"
+                                                    className="form-control"
+                                                    value={editForm.password}
+                                                    onChange={(e) => setEditForm({...editForm, password: e.target.value})}
+                                                    placeholder="Новый пароль (оставьте пустым если не менять)"
                                                 />
                                             </div>
                                             {editError && <div className="text-danger small">{editError}</div>}

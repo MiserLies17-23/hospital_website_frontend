@@ -93,6 +93,7 @@ const AddUserPage = () => {
                                             required
                                         >
                                             <option value="USER">Пользователь</option>
+                                            <option value="MODERATOR">Модератор</option>
                                             <option value="ADMIN">Администратор</option>
                                         </select>
                                     </div>

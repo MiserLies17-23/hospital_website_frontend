@@ -95,6 +95,7 @@ const UpdateNewsPage = () => {
                                     <div className="mb-3">
                                         <label className="form-label">Текст статьи</label>
                                         <textarea
+                                            type="text"
                                             className="form-control"
                                             name="content"
                                             rows="8"
