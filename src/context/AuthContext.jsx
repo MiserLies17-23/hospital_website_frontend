@@ -10,7 +10,8 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        checkAuth();
+        //checkAuth();
+        setLoading(false);
     }, []);
 
     const checkAuth = async () => {

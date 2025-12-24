@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { appointmentsApi } from '../api/appointmentsApi';
+import { appointmentsApi } from '../api';
 
 export const useTimeSlots = (doctorId, date) => {
     const [busySlots, setBusySlots] = useState([]);
