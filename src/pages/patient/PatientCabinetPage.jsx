@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { userApi } from '../../api';
 import { authApi} from "../../api";
+import {getErrorMessage} from "../../utils/errorHandler"
 import { useAppointments } from '../../hooks/useAppointments';
 import { getAvatarUrlWithTimestamp, isDefaultAvatar } from '../../utils/formatters';
 import Loader from '../../components/common/Loader/Loader';
@@ -128,7 +129,6 @@ const PatientCabinetPage = () => {
             setUser(prev => ({ ...prev, avatar: userResponse.data.avatar }));
 
             alert('Аватар успешно обновлен!');
-            window.location.reload();
         } catch (error) {
             console.error('Ошибка при загрузке аватара:', error);
             alert('Не удалось загрузить аватар');
@@ -208,7 +208,7 @@ const PatientCabinetPage = () => {
             setIsEditing(false);
             alert('Данные успешно обновлены!');
         } catch (error) {
-            setEditError('Ошибка при обновлении данных');
+            setEditError(getErrorMessage(error) || 'Ошибка при обновлении данных');
         } finally {
             setEditLoading(false);
         }

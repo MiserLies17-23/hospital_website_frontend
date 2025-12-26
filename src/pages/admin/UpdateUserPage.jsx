@@ -17,6 +17,9 @@ const UpdateUserPage = () => {
         role: '',
         avatar: ''
     });
+    const [showPassword, setShowPassword] = useState(false);
+    const [passwordChanged, setPasswordChanged] = useState(false);
+    const [originalPassword, setOriginalPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [avatarLoading, setAvatarLoading] = useState(false);
@@ -35,7 +38,13 @@ const UpdateUserPage = () => {
                 userData.avatar = getAvatarUrlWithTimestamp(userData.avatar);
             }
 
-            setUser(userData);
+            // Сохраняем оригинальный пароль (или скрытый placeholder)
+            setOriginalPassword(userData.password || '');
+            // Инициализируем поле пароля как пустое
+            setUser({
+                ...userData,
+                password: '' // Не показываем реальный пароль
+            });
         } catch (error) {
             setError(getErrorMessage(error) || 'Не удалось загрузить данные пользователя');
         } finally {
@@ -97,8 +106,16 @@ const UpdateUserPage = () => {
         setLoading(true);
         setError('');
 
+        // Если пароль не изменился, отправляем пустую строку или null
+        const userToUpdate = {
+            ...user,
+            id: id,
+            // Если пароль не менялся, отправляем пустую строку или удаляем поле
+            password: passwordChanged ? user.password : ''
+        };
+
         try {
-            await userApi.updateUser(id, user);
+            await userApi.updateUser(id, userToUpdate);
             alert('Данные пользователя успешно обновлены!');
             navigate('/admin');
         } catch (error) {
@@ -111,6 +128,21 @@ const UpdateUserPage = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setUser(prev => ({ ...prev, [name]: value }));
+
+        // Отслеживаем изменение пароля
+        if (name === 'password') {
+            setPasswordChanged(value !== '');
+        }
+    };
+
+    const togglePasswordVisibility = () => {
+        setShowPassword(!showPassword);
+    };
+
+    const clearPasswordField = () => {
+        setUser(prev => ({ ...prev, password: '' }));
+        setPasswordChanged(false);
+        setShowPassword(false);
     };
 
     if (loading && !user.username) {
@@ -170,6 +202,7 @@ const UpdateUserPage = () => {
 
                                         {user.avatar && !isDefaultAvatar(user.avatar) && (
                                             <button
+                                                type="button"
                                                 className="btn btn-outline-danger btn-sm ms-2"
                                                 onClick={handleRemoveAvatar}
                                                 disabled={avatarLoading}
@@ -203,6 +236,18 @@ const UpdateUserPage = () => {
                                             value={user.email || ''}
                                             onChange={handleChange}
                                             required
+                                        />
+                                    </div>
+
+                                    <div className="mb-3">
+                                        <label className="form-label">Пароль</label>
+                                        <input
+                                            type="password"
+                                            className="form-control"
+                                            name="password"
+                                            value={user.password}
+                                            onChange={handleChange}
+                                            placeholder="Введите новый пароль (оставьте пустым, чтобы не менять)"
                                         />
                                     </div>
 

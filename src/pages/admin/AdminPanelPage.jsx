@@ -1,26 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import {doctorsApi, userApi} from '../../api';
+import {authApi, doctorsApi, userApi} from '../../api';
 import Loader from '../../components/common/Loader/Loader';
 import './AdminPanelPage.css';
+import {getErrorMessage} from "../../utils/errorHandler";
 
 const AdminPanelPage = () => {
     const [users, setUsers] = useState([]);
     const [doctors, setDoctors] = useState([]);
+    const [currentAdminId, setCurrentAdminId] = useState(null); // ID текущего админа
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
     useEffect(() => {
+        fetchCurrentAdmin();
         fetchUsers();
         fetchDoctors();
     }, []);
+
+    // Получаем ID текущего админа
+    const fetchCurrentAdmin = async () => {
+        try {
+            const response = await authApi.checkAuth();
+            setCurrentAdminId(response.data.id);
+        } catch (error) {
+            console.error('Не удалось получить ID текущего пользователя:', error);
+            setError(getErrorMessage(error))
+        }
+    };
 
     const fetchUsers = async () => {
         try {
             const response = await userApi.getAllUsers();
             setUsers(response.data);
         } catch (error) {
-            setError('Не удалось загрузить данные пользователей');
+            setError(getErrorMessage(error) || 'Не удалось загрузить данные пользователей');
         }
     };
 
@@ -29,20 +43,25 @@ const AdminPanelPage = () => {
             const response = await doctorsApi.getAllDoctors();
             setDoctors(response.data);
         } catch (error) {
-            setError('Не удалось загрузить данные врачей');
+            setError(getErrorMessage(error) || 'Не удалось загрузить данные врачей');
         } finally {
             setLoading(false);
         }
     };
 
     const deleteUser = async (id) => {
+        if (id === currentAdminId) {
+            alert('Вы не можете удалить сами себя!');
+            return;
+        }
+
         if (!window.confirm('Вы уверены, что хотите удалить пользователя?')) return;
 
         try {
             await userApi.deleteUser(id);
             setUsers(users.filter(user => user.id !== id));
         } catch (error) {
-            setError('Не удалось удалить пользователя');
+            setError(getErrorMessage(error) || 'Не удалось удалить пользователя');
         }
     };
 
@@ -53,7 +72,7 @@ const AdminPanelPage = () => {
             await doctorsApi.deleteDoctor(id);
             setDoctors(doctors.filter(doctor => doctor.id !== id));
         } catch (error) {
-            setError('Не удалось удалить врача');
+            setError(getErrorMessage(error) || 'Не удалось удалить врача');
         }
     };
 
@@ -126,7 +145,8 @@ const AdminPanelPage = () => {
                                                 >
                                                     Изменить
                                                 </Link>
-                                                {user.id !== 1 && (
+                                                {/* Показываем кнопку удаления только если это НЕ текущий админ */}
+                                                {user.id !== currentAdminId && (
                                                     <button
                                                         className="btn btn-danger"
                                                         onClick={() => deleteUser(user.id)}
