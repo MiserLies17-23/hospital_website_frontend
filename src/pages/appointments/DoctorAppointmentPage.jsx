@@ -85,10 +85,10 @@ const DoctorAppointmentPage = () => {
 
     return (
         <div className="doctor-appointment-page">
-            <h2 className="text-center mb-4">Запись на прием к врачу</h2>
+            <h2 className="text-center mb-4">Наши врачи</h2>
 
             {!isAuthenticated && (
-                <div className="alert alert-info text-center">
+                <div className="alert alert-info text-center mb-4">
                     Для записи на прием необходимо <Link to="/login">войти</Link> или <Link to="/signup">зарегистрироваться</Link>
                 </div>
             )}
@@ -96,97 +96,99 @@ const DoctorAppointmentPage = () => {
             {success && <div className="alert alert-success text-center">{success}</div>}
             {error && <div className="alert alert-danger text-center">{error}</div>}
 
-            {/* Форма для новой записи */}
-            <div className="card mb-4">
-                <div className="card-body">
-                    <h5 className="card-title">Новая запись</h5>
-                    <form onSubmit={handleSubmit}>
-                        <div className="row">
-                            <div className="col-md-6 mb-3">
-                                <label className="form-label">Выберите врача *</label>
-                                <select
-                                    className="form-select"
-                                    value={selectedDoctor}
-                                    onChange={(e) => {
-                                        setSelectedDoctor(e.target.value);
-                                        setAppointmentTime('');
-                                    }}
-                                    required
-                                    disabled={loadingDoctors}
-                                >
-                                    <option value="">-- Выберите врача --</option>
-                                    {doctors.map(doctor => (
-                                        <option key={doctor.id} value={doctor.id}>
-                                            {doctor.name} - {doctor.specialization} ({doctor.phone})
-                                        </option>
-                                    ))}
-                                </select>
-                                {loadingDoctors && <small className="text-muted">Загрузка списка врачей...</small>}
-                            </div>
-
-                            <div className="col-md-6 mb-3">
-                                <label className="form-label">Дата приема *</label>
-                                <input
-                                    type="date"
-                                    className="form-control"
-                                    value={appointmentDate}
-                                    onChange={(e) => {
-                                        setAppointmentDate(e.target.value);
-                                        setAppointmentTime('');
-                                    }}
-                                    min={getMinDate()}
-                                    max={getMaxDate()}
-                                    required
-                                />
-                            </div>
-                        </div>
-
-                        <div className="row">
-                            <div className="col-md-6 mb-3">
-                                <label className="form-label">Время приема *</label>
-                                <TimeSlotSelector
-                                    availableSlots={availableSlots}
-                                    busySlots={busySlots}
-                                    selectedTime={appointmentTime}
-                                    onSelectTime={setAppointmentTime}
-                                    loading={loadingSlots}
-                                />
-                            </div>
-
-                            <div className="col-md-6 mb-3">
-                                <label className="form-label">Жалобы/Симптомы</label>
-                                <textarea
-                                    className="form-control"
-                                    rows="3"
-                                    value={symptoms}
-                                    onChange={(e) => setSymptoms(e.target.value)}
-                                    placeholder="Опишите ваши симптомы или причину обращения..."
-                                />
-                            </div>
-                        </div>
-
-                        <div className="text-center">
-                            <button
-                                type="submit"
-                                className="btn btn-primary btn-lg"
-                                disabled={creatingAppointment || loadingDoctors || loadingSlots || !availableSlots.length}
-                            >
-                                {creatingAppointment ? 'Запись...' : 'Записаться на прием'}
-                            </button>
-
-                            {(loadingSlots || !availableSlots.length) && (
-                                <div className="mt-2">
-                                    <small className="text-muted">
-                                        {loadingSlots ? 'Проверяем доступность...' : 'Нет доступного времени для записи'}
-                                    </small>
+            {/* Форма для новой записи - ТОЛЬКО для авторизованных */}
+            {isAuthenticated && (
+                <div className="card mb-4">
+                    <div className="card-body">
+                        <h5 className="card-title">Новая запись</h5>
+                        <form onSubmit={handleSubmit}>
+                            <div className="row">
+                                <div className="col-md-6 mb-3">
+                                    <label className="form-label">Выберите врача *</label>
+                                    <select
+                                        className="form-select"
+                                        value={selectedDoctor}
+                                        onChange={(e) => {
+                                            setSelectedDoctor(e.target.value);
+                                            setAppointmentTime('');
+                                        }}
+                                        required
+                                        disabled={loadingDoctors}
+                                    >
+                                        <option value="">-- Выберите врача --</option>
+                                        {doctors.map(doctor => (
+                                            <option key={doctor.id} value={doctor.id}>
+                                                {doctor.name} - {doctor.specialization} ({doctor.phone})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {loadingDoctors && <small className="text-muted">Загрузка списка врачей...</small>}
                                 </div>
-                            )}
-                        </div>
-                    </form>
-                </div>
-            </div>
 
-            {/* Информация о врачах */}
+                                <div className="col-md-6 mb-3">
+                                    <label className="form-label">Дата приема *</label>
+                                    <input
+                                        type="date"
+                                        className="form-control"
+                                        value={appointmentDate}
+                                        onChange={(e) => {
+                                            setAppointmentDate(e.target.value);
+                                            setAppointmentTime('');
+                                        }}
+                                        min={getMinDate()}
+                                        max={getMaxDate()}
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="row">
+                                <div className="col-md-6 mb-3">
+                                    <label className="form-label">Время приема *</label>
+                                    <TimeSlotSelector
+                                        availableSlots={availableSlots}
+                                        busySlots={busySlots}
+                                        selectedTime={appointmentTime}
+                                        onSelectTime={setAppointmentTime}
+                                        loading={loadingSlots}
+                                    />
+                                </div>
+
+                                <div className="col-md-6 mb-3">
+                                    <label className="form-label">Жалобы/Симптомы</label>
+                                    <textarea
+                                        className="form-control"
+                                        rows="3"
+                                        value={symptoms}
+                                        onChange={(e) => setSymptoms(e.target.value)}
+                                        placeholder="Опишите ваши симптомы или причину обращения..."
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="text-center">
+                                <button
+                                    type="submit"
+                                    className="btn btn-primary btn-lg"
+                                    disabled={creatingAppointment || loadingDoctors || loadingSlots || !availableSlots.length}
+                                >
+                                    {creatingAppointment ? 'Запись...' : 'Записаться на прием'}
+                                </button>
+
+                                {(loadingSlots || !availableSlots.length) && (
+                                    <div className="mt-2">
+                                        <small className="text-muted">
+                                            {loadingSlots ? 'Проверяем доступность...' : 'Нет доступного времени для записи'}
+                                        </small>
+                                    </div>
+                                )}
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Информация о врачах - ДЛЯ ВСЕХ */}
             <div className="mt-4">
                 <h4 className="text-center mb-4">Наши врачи</h4>
                 {loadingDoctors ? (

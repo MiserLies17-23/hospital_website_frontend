@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { userApi } from '../../api';
+import {getErrorMessage} from "../../utils/errorHandler";
 
 const AddUserPage = () => {
     const navigate = useNavigate();
@@ -24,7 +25,7 @@ const AddUserPage = () => {
             alert('Пользователь успешно создан!');
             navigate('/admin');
         } catch (error) {
-            setError('Не удалось создать пользователя');
+            setError(getErrorMessage(error));
         } finally {
             setLoading(false);
         }

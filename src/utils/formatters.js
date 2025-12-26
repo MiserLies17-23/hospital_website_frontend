@@ -18,10 +18,14 @@ export const formatDateTime = (dateString, timeString) => {
 };
 
 export const getAvatarUrlWithTimestamp = (avatarUrl) => {
-    if (!avatarUrl) return null;
-    const baseUrl = avatarUrl.split('?')[0];
-    const timestamp = Date.now();
-    return `${baseUrl}?t=${timestamp}`;
+    if (!avatarUrl) return avatarUrl;
+
+    // Убедимся, что добавляем timestamp
+    const hasQuery = avatarUrl.includes('?');
+    const separator = hasQuery ? '&' : '?';
+
+    // Всегда новый timestamp
+    return `${avatarUrl}${separator}t=${Date.now()}`;
 };
 
 export const isDefaultAvatar = (avatarUrl) => {

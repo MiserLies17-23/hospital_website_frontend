@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { newsApi } from '../../api/newsApi';
 import Loader from '../../components/common/Loader/Loader';
+import {getErrorMessage} from "../../utils/errorHandler";
 
 const UpdateNewsPage = () => {
     const { id } = useParams();
@@ -35,7 +36,7 @@ const UpdateNewsPage = () => {
                 date: originalDate,
             });
         } catch (error) {
-            setError('Не удалось загрузить данные новости');
+            setError(getErrorMessage(error) || 'Не удалось загрузить данные новости');
         } finally {
             setLoading(false);
         }
@@ -51,7 +52,7 @@ const UpdateNewsPage = () => {
             alert('Новость успешно обновлена!');
             navigate('/moderator');
         } catch (error) {
-            setError('Не удалось обновить новость');
+            setError(getErrorMessage(error) || 'Не удалось обновить новость');
         } finally {
             setLoading(false);
         }

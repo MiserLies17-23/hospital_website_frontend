@@ -4,6 +4,7 @@ import { userApi } from '../../api';
 import { getAvatarUrlWithTimestamp, isDefaultAvatar } from '../../utils/formatters';
 import Loader from '../../components/common/Loader/Loader';
 import './UpdatePage.css';
+import {getErrorMessage} from "../../utils/errorHandler";
 
 const UpdateUserPage = () => {
     const { id } = useParams();
@@ -36,7 +37,7 @@ const UpdateUserPage = () => {
 
             setUser(userData);
         } catch (error) {
-            setError('Не удалось загрузить данные пользователя');
+            setError(getErrorMessage(error) || 'Не удалось загрузить данные пользователя');
         } finally {
             setLoading(false);
         }
@@ -65,14 +66,14 @@ const UpdateUserPage = () => {
 
         try {
             const response = await userApi.uploadAvatar(formData);
-            let newAvatarUrl = response.data.avatarUrl;
+            let newAvatarUrl = response.data.avatar;
             if (newAvatarUrl) {
                 newAvatarUrl = getAvatarUrlWithTimestamp(newAvatarUrl);
             }
             setUser(prev => ({ ...prev, avatar: newAvatarUrl }));
             alert('Аватар успешно обновлен!');
         } catch (error) {
-            setError('Не удалось загрузить аватар');
+            setError(getErrorMessage(error) || 'Не удалось загрузить аватар');
         } finally {
             setAvatarLoading(false);
             event.target.value = '';
@@ -87,7 +88,7 @@ const UpdateUserPage = () => {
             setUser(prev => ({ ...prev, avatar: null }));
             alert('Аватар удален!');
         } catch (error) {
-            setError('Не удалось удалить аватар');
+            setError(getErrorMessage(error) || 'Не удалось удалить аватар');
         }
     };
 
@@ -101,7 +102,7 @@ const UpdateUserPage = () => {
             alert('Данные пользователя успешно обновлены!');
             navigate('/admin');
         } catch (error) {
-            setError('Не удалось обновить данные пользователя');
+            setError(getErrorMessage(error) || 'Не удалось обновить данные пользователя');
         } finally {
             setLoading(false);
         }

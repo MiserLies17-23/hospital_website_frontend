@@ -110,11 +110,11 @@ const AdminPanelPage = () => {
                                         </td>
                                         <td>
                                             <img
-                                                src={user.avatar || '/default-avatar.png'}
+                                                src={user.avatar || '/defaultUserImage.jpg'}
                                                 alt="Аватар"
                                                 className="admin-avatar"
                                                 onError={(e) => {
-                                                    e.target.src = '/default-avatar.png';
+                                                    e.target.src = '/defaultUserImage.jpg';
                                                 }}
                                             />
                                         </td>

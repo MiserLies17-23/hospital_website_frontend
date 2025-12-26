@@ -19,6 +19,7 @@ const PatientCabinetPage = () => {
     const [editForm, setEditForm] = useState({
         username: '',
         email: '',
+        password: '',
     });
     const [editError, setEditError] = useState('');
     const [editLoading, setEditLoading] = useState(false);
@@ -50,7 +51,11 @@ const PatientCabinetPage = () => {
             });
 
             if (userData.avatar) {
-                setAvatar(getAvatarUrlWithTimestamp(userData.avatar));
+                // Добавляем timestamp для предотвращения кеширования
+                const avatarWithTimestamp = getAvatarUrlWithTimestamp(userData.avatar);
+                setAvatar(avatarWithTimestamp);
+            } else {
+                setAvatar(null);
             }
         } catch (error) {
             console.error('Ошибка загрузки данных пользователя:', error);
@@ -118,9 +123,12 @@ const PatientCabinetPage = () => {
             });
 
             const userResponse = await authApi.getProfile();
-            const newAvatarUrl = getAvatarUrlWithTimestamp(userResponse.data.avatar);
-            setAvatar(newAvatarUrl);
+
+            setAvatar(userResponse.data.avatar);
+            setUser(prev => ({ ...prev, avatar: userResponse.data.avatar }));
+
             alert('Аватар успешно обновлен!');
+            window.location.reload();
         } catch (error) {
             console.error('Ошибка при загрузке аватара:', error);
             alert('Не удалось загрузить аватар');
@@ -137,10 +145,12 @@ const PatientCabinetPage = () => {
         try {
             await userApi.deleteAvatar();
 
+            // Получаем обновленные данные
             const userResponse = await authApi.getProfile();
             const updatedUser = userResponse.data;
 
             if (updatedUser.avatar) {
+                // Если остался дефолтный аватар, тоже добавляем timestamp
                 const newAvatarUrl = getAvatarUrlWithTimestamp(updatedUser.avatar);
                 setAvatar(newAvatarUrl);
             } else {
@@ -148,7 +158,6 @@ const PatientCabinetPage = () => {
             }
 
             setUser(prev => ({ ...prev, avatar: updatedUser.avatar }));
-
             alert('Аватар удален!');
         } catch (error) {
             console.error('Ошибка при удалении аватара:', error);
@@ -254,6 +263,7 @@ const PatientCabinetPage = () => {
                                         {avatar ? (
                                             <img
                                                 src={avatar}
+                                                key={avatar}
                                                 alt="User Avatar"
                                                 className="avatar-image"
                                                 style={{

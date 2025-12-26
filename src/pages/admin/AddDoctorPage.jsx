@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { doctorsApi } from '../../api';
+import {getErrorMessage} from "../../utils/errorHandler";
 
 const AddDoctorPage = () => {
     const navigate = useNavigate();
@@ -23,7 +24,7 @@ const AddDoctorPage = () => {
             alert('Врач успешно создан!');
             navigate('/admin');
         } catch (error) {
-            setError('Не удалось создать врача');
+            setError(getErrorMessage(error));
         } finally {
             setLoading(false);
         }

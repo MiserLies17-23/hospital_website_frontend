@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { newsApi } from '../../api/newsApi';
+import {getErrorMessage} from "../../utils/errorHandler";
 
 const AddNewsPage = () => {
     const navigate = useNavigate();
@@ -34,7 +35,7 @@ const AddNewsPage = () => {
             alert('Новость успешно создана!');
             navigate('/moderator');
         } catch (error) {
-            setError('Не удалось создать новость');
+            setError(getErrorMessage(error) || 'Не удалось создать новость');
         } finally {
             setLoading(false);
         }

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doctorsApi } from '../../api';
 import Loader from '../../components/common/Loader/Loader';
+import {getErrorMessage} from "../../utils/errorHandler";
 
 const UpdateDoctorPage = () => {
     const { id } = useParams();
@@ -25,7 +26,7 @@ const UpdateDoctorPage = () => {
             const response = await doctorsApi.getDoctorById(id);
             setDoctor(response.data);
         } catch (error) {
-            setError('Не удалось загрузить данные врача');
+            setError(getErrorMessage(error) || 'Не удалось загрузить данные врача');
         } finally {
             setLoading(false);
         }
@@ -41,7 +42,7 @@ const UpdateDoctorPage = () => {
             alert('Данные врача успешно обновлены!');
             navigate('/admin');
         } catch (error) {
-            setError('Не удалось обновить данные врача');
+            setError(getErrorMessage(error) || 'Не удалось обновить данные врача');
         } finally {
             setLoading(false);
         }
